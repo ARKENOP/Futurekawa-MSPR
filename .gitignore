@@ -84,3 +84,4 @@ lcov.info
 
 # Github Copilot instructions
 .github/copilot-instructions.md
+.vscode/settings.json

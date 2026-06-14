@@ -6,7 +6,8 @@ A **single Spring Boot codebase** that serves as the local backend for any count
 Country-specific configuration (name, thresholds, tolerances, alert recipients, etc.) is injected at runtime through a **`.env`** file consumed by Docker Compose.
 No per-country folder — one image, one compose file, three deployments.
 
-Authentication is handled by **Odoo OpenID Connect** (OAuth 2.0 / OIDC) and alert emails are sent through **Odoo's `mail.message` API**, eliminating the need for a standalone SMTP server.
+The local backend has **no app-level authentication**. It is a machine-to-machine service, called only by the central backend, and is secured at the network/service layer (private network / VPN / mTLS or a client-credentials token presented by the central backend). User authentication and RBAC live at the edge (frontend + central backend via Keycloak), not here. See §11 for the rationale.
+Alert emails are sent through **Odoo's `mail.message` API**, eliminating the need for a standalone SMTP server.
 
 ---
 
@@ -18,7 +19,7 @@ Authentication is handled by **Odoo OpenID Connect** (OAuth 2.0 / OIDC) and aler
 | Build | Gradle (Kotlin DSL) or Maven |
 | Messaging | Spring Integration MQTT (Eclipse Paho) |
 | Persistence | Spring Data JPA + PostgreSQL 16 |
-| Auth | Spring Security OAuth2 Resource Server (OIDC via Odoo) |
+| Auth | None at app level — M2M service secured at the network/service layer (see §11) |
 | Email (alerting) | Odoo `mail.message` API (XML-RPC / JSON-RPC) |
 | Resilience | Scheduled tasks (`@Scheduled`) for periodic checks |
 | API docs | springdoc-openapi (OpenAPI 3.x / Swagger UI) |
@@ -61,16 +62,12 @@ POSTGRES_DB=futurekawa_${COUNTRY_CODE}
 POSTGRES_USER=futurekawa
 POSTGRES_PASSWORD=changeme
 
-# ── Odoo (ERP + Email + Auth) ─────────────────────────
+# ── Odoo (ERP + Email) ────────────────────────────────
 ODOO_URL=http://odoo:8069
 ODOO_DB=futurekawa
 ODOO_API_USER=api-backend@futurekawa.local
 ODOO_API_KEY=changeme-odoo-api-key
 ALERTE_DESTINATAIRE_EMAIL=responsable.br@futurekawa.local
-
-# ── OpenID Connect (Odoo as provider) ─────────────────
-SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://odoo:8069/auth/oidc
-OIDC_JWKS_URI=http://odoo:8069/auth/oidc/.well-known/jwks.json
 
 # ── Server ────────────────────────────────────────────
 SERVER_PORT=8081
@@ -400,7 +397,6 @@ backend-local/
 │       │   ├── BackendLocalApplication.java
 │       │   ├── config/
 │       │   │   ├── MqttConfig.java
-│       │   │   ├── SecurityConfig.java           ← OIDC resource server config
 │       │   │   ├── OdooProperties.java            ← binds Odoo connection vars
 │       │   │   ├── PaysProperties.java            ← binds .env thresholds
 │       │   │   └── DataInitializer.java            ← seeds pays row
@@ -452,7 +448,6 @@ backend-local/
 │   ├── integration/
 │   │   ├── LotControllerIntegrationTest.java
 │   │   ├── MesureControllerIntegrationTest.java
-│   │   ├── SecurityIntegrationTest.java            ← OIDC token validation tests
 │   │   └── MqttIngestionIntegrationTest.java
 │   └── fixtures/
 │       ├── sample-mesure-payload.json
@@ -499,7 +494,7 @@ services:
       PASSWORD: odoo
     volumes:
       - odoo-data:/var/lib/odoo
-      - ./infra/odoo/addons:/mnt/extra-addons     # custom OIDC + email modules
+      - ./odoo/addons:/mnt/extra-addons     # futurekawa_quality + futurekawa_inventory
 
   odoo-db:
     image: postgres:16-alpine
@@ -551,7 +546,6 @@ docker compose up --build
 | 8 | Implement `AlerteService` + threshold evaluation logic | Step 6 |
 | 9 | Implement `OdooRpcClient` + `OdooEmailService` (email via Odoo API) | Step 8 |
 | 10 | Implement `PeremptionScheduler` (lot expiry cron) | Step 8 |
-| 11 | Configure `SecurityConfig` (OIDC resource server, JWT validation) | Step 1 |
 | 12 | Wire up remaining controllers (`Entrepot`, `Exploitation`, `Pays`) | Step 4 |
 | 13 | Write `docker-compose.yml` + `Dockerfile` (incl. Odoo service) | Step 1 |
 | 14 | Create `.env.bresil`, `.env.equateur`, `.env.colombie` | — |
@@ -568,7 +562,7 @@ docker compose up --build
 2. **FIFO is a query concern** — `ORDER BY date_entree_stockage ASC`; no queue data structure needed.
 3. **Alert dedup** — do not create a new `condition_non_ideale` alert if an `ouverte` one already exists for the same entrepôt. Only create a new alert once the previous one is `cloturee`.
 4. **Odoo as email gateway** — alert emails are sent via Odoo's `mail.message` API rather than a local SMTP server. This centralises email delivery, leverages Odoo's outgoing mail server configuration, and avoids maintaining a separate mail stack.
-5. **Odoo OpenID Connect for auth** — all REST endpoints are secured with JWT tokens issued by Odoo's OIDC provider. The backend acts as an OAuth2 Resource Server (Spring Security), validating tokens via Odoo's JWKS endpoint. MQTT ingestion (internal, machine-to-machine) is excluded from OIDC and trusted at the network level.
+5. **No app-level auth on the local backend** — the local API is a machine-to-machine service called only by the central backend. Authenticating end users here would be misplaced: user login and RBAC belong at the edge (frontend + central backend via Keycloak). The local API is instead protected at the network/service layer — private network / VPN, and a service credential (mTLS or a client-credentials JWT presented by the central backend) — which is defense-in-depth rather than perimeter-only trust. This keeps Spring Security off the local classpath entirely. MQTT ingestion is likewise internal and trusted at the network level. Defense-in-depth JWT validation can be reintroduced on the local API later if required.
 6. **Glossary compliance** — all entity names, field names, enum values, and API paths follow `GLOSSAIRE.md` conventions.
 7. **Timezone** — all timestamps stored as UTC; the `.env` may optionally define a display timezone.
 
@@ -581,8 +575,7 @@ docker compose up --build
 - [ ] Out-of-range temperature triggers an alert and sends an email via the Odoo `mail.message` API.
 - [ ] `GET /api/v1/lots` returns lots sorted by `dateEntreeStockage ASC` (FIFO).
 - [ ] A lot older than 365 days is automatically flagged `perime` by the scheduler.
-- [ ] REST API endpoints reject requests without a valid OIDC JWT token (401 Unauthorized).
-- [ ] REST API endpoints accept requests with a valid OIDC JWT issued by Odoo.
+- [ ] REST API endpoints are reachable without authentication (no app-level security on the local backend).
 - [ ] Swagger UI is accessible at `/swagger-ui.html`.
 - [ ] Switching `.env` from Brazil to Ecuador changes thresholds without code changes.
 - [ ] All unit and integration tests pass (`./gradlew test` or `mvn test`).

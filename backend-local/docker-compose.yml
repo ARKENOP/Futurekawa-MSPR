@@ -1,0 +1,10 @@
+services:
+  backend:
+    build: .
+    image: futurekawa/backend-local:latest
+    container_name: futurekawa-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"

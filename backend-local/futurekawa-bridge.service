@@ -1,0 +1,18 @@
+[Unit]
+Description=FutureKawa Arduino serial -> MQTT bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=alin
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/futurekawa/serial-bridge/venv/bin/python3 /opt/futurekawa/serial-bridge/serial_mqtt_bridge.py \
+  --serial-port /dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_242303035373518051B2-if00 \
+  --baud 9600 --broker 192.168.1.176 --broker-port 1883 \
+  --country BR --entrepot-id 1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

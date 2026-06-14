@@ -6,6 +6,7 @@ graph TB
     classDef hardware fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
     classDef db fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
     classDef erp fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef auth fill:#fff8e1,stroke:#f57f17,stroke-width:2px;
     classDef docker fill:#e0f7fa,stroke:#00acc1,stroke-width:1px,stroke-dasharray: 5 5;
     classDef devops fill:#fafafa,stroke:#424242,stroke-width:1px,stroke-dasharray: 3 3;
 
@@ -49,9 +50,14 @@ graph TB
     end
 
     %% ════════════════════════════════════════════════════
-    %% ODOO — ERP + AUTH + EMAIL
+    %% KEYCLOAK — IDENTITY PROVIDER
     %% ════════════════════════════════════════════════════
-    Odoo[🟣 Odoo Open Source<br>ERP + Module Email<br>+ Fournisseur OpenID Connect]:::erp
+    Keycloak[🔐 Keycloak<br>Identity Provider<br>OpenID Connect / OAuth 2.0]:::auth
+
+    %% ════════════════════════════════════════════════════
+    %% ODOO — ERP + EMAIL
+    %% ════════════════════════════════════════════════════
+    Odoo[🟣 Odoo Open Source<br>ERP + Module Email<br>futurekawa_quality / futurekawa_inventory]:::erp
 
     %% ════════════════════════════════════════════════════
     %% CI / CD
@@ -81,11 +87,13 @@ graph TB
     %% ── Odoo — ERP / Métier ────────────────────────────
     BackendCentral <-->|6. Intégration ERP<br>XML-RPC / JSON-RPC| Odoo
 
-    %% ── Odoo — Authentification OpenID Connect ─────────
-    Frontend -.->|7. Authentification Utilisateur<br>OpenID Connect / OAuth 2.0| Odoo
-    BackendCentral -.->|8. Validation Token OIDC<br>JWKS / Introspection| Odoo
-    API2 -.->|8. Validation Token OIDC<br>JWKS / Introspection| Odoo
-    API1 -.->|8. Validation Token OIDC<br>JWKS / Introspection| Odoo
+    %% ── Keycloak — Authentification OpenID Connect (au niveau du siège) ─────
+    %% L'authentification utilisateur et le RBAC sont gérés au niveau du
+    %% frontend + backend central. Les backends locaux sont des services
+    %% machine-to-machine sans authentification applicative (sécurisés au
+    %% niveau réseau/service : VPN / mTLS / token client-credentials).
+    Frontend -.->|7. Authentification Utilisateur<br>OpenID Connect / OAuth 2.0| Keycloak
+    BackendCentral -.->|8. Validation Token OIDC<br>JWKS / Introspection| Keycloak
 
     %% ── Odoo — Envoi Email (alertes) ───────────────────
     API2 -->|9. Envoi Alerte Email<br>via API Odoo mail.message| Odoo

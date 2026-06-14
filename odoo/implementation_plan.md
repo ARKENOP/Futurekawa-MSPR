@@ -2,7 +2,7 @@
 
 This implementation plan details the custom ERP development requirements to support the FutureKawa MSPR coffee tracking application. 
 
-Following the **RNCP Bloc 4 certification** requirements for custom ERP programming, we define two custom Odoo v18 Community modules (`futurekawa_quality` and `futurekawa_inventory`). Authentication (OpenID Connect Provider) will be handled using a standard, secure community module (such as the OCA `server_openid_connect` or `oauth2_provider`) to guarantee security, combined with custom user group mapping.
+Following the **RNCP Bloc 4 certification** requirements for custom ERP programming, we define two custom Odoo v18 Community modules (`futurekawa_quality` and `futurekawa_inventory`). **Authentication is handled by Keycloak** (see architecture docs) — Odoo logs in via Keycloak using the built-in `auth_oauth` module. Odoo's role is strictly ERP + email alerting.
 
 ---
 
@@ -38,17 +38,20 @@ odoo/
 
 ---
 
-## 2. Secure OIDC Authentication (Community Module Approach)
+## 2. Authentication — Keycloak (not Odoo)
 
-To avoid writing custom cryptography or OAuth token controllers, FutureKawa utilizes a vetted, secure OpenID Connect Identity Provider module from the Odoo Community Association (OCA) or standard market apps (e.g., `oauth2_provider` or `server_openid_connect`).
+Authentication is **not handled by Odoo**. Keycloak is the sole OIDC identity provider for the entire system.
 
-### Role-Based Access Control (RBAC) & Claims Mapping
-We configure the community OIDC module to map Odoo **Security Groups** to custom JWT scopes and claims:
+Odoo is configured as an **OAuth2 client** via the built-in `auth_oauth` module, allowing Odoo users to log in with their Keycloak credentials (SSO). Role-based access control (RBAC) and JWT claim mapping (`role`, `country`) are configured directly in Keycloak realm settings.
 
-*   **Group: `futurekawa.group_siege`** $\rightarrow$ maps to JWT claim `role: ROLE_SIEGE` (Read/Write on all countries).
-*   **Group: `futurekawa.group_manager_br`** $\rightarrow$ maps to JWT claim `role: ROLE_MANAGER`, `country: BR` (Read/Write limited to Brazilian local backend).
-*   **Group: `futurekawa.group_manager_ec`** $\rightarrow$ maps to JWT claim `role: ROLE_MANAGER`, `country: EC`.
-*   **Group: `futurekawa.group_manager_co`** $\rightarrow$ maps to JWT claim `role: ROLE_MANAGER`, `country: CO`.
+| Keycloak Role | Scope |
+|---|---|
+| `ROLE_SIEGE` | Read/Write on all countries |
+| `ROLE_MANAGER` + `country: BR/EC/CO` | Scoped to one country's backend |
+
+**Odoo modules required**:
+- Activate `auth_oauth` (Settings → Integrations → OAuth Authentication)
+- Configure Keycloak as the OAuth provider pointing to `http://keycloak:8080/realms/futurekawa`
 
 ---
 
