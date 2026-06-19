@@ -106,7 +106,6 @@ futurekawa:
     db: ${ODOO_DB:futurekawa}
     api-user: ${ODOO_API_USER:api-backend@futurekawa.local}
     api-key: ${ODOO_API_KEY:changeme-odoo-api-key}
-    alerte-destinataire-email: ${ALERTE_DESTINATAIRE_EMAIL:responsable@futurekawa.local}
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging:

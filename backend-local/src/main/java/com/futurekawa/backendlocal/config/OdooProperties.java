@@ -12,8 +12,8 @@ import jakarta.validation.constraints.NotBlank;
  * <p>Uses constructor binding (Java record) following Spring Boot 4 best
  * practices for immutable configuration. Validated at startup via JSR-303.</p>
  *
- * <p>Used by {@code OdooRpcClient} and {@code OdooEmailService} to
- * authenticate and send alert emails via Odoo's {@code mail.message} API.</p>
+ * <p>Used by {@code OdooRpcClient} and {@code OdooQualityAlertService} to
+ * authenticate and push quality-alert tickets via Odoo's external API.</p>
  */
 @Validated
 @ConfigurationProperties(prefix = "futurekawa.odoo")
@@ -21,6 +21,5 @@ public record OdooProperties(
         @NotBlank String url,
         @NotBlank String db,
         @NotBlank String apiUser,
-        @NotBlank String apiKey,
-        @NotBlank String alerteDestinataireEmail
+        @NotBlank String apiKey
 ) {}

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Email sent to the quality team when a CRITICAL alert ticket is created.
+        Recipient list is editable here (email_to) or in the UI:
+        Settings > Technical > Email > Templates > "Alerte Qualite FutureKawa".
+    -->
+    <record id="mail_template_quality_alert" model="mail.template">
+        <field name="name">Alerte Qualite FutureKawa</field>
+        <field name="model_id" ref="futurekawa_quality.model_futurekawa_quality_alert"/>
+        <field name="email_from">herciualin10@gmail.com</field>
+        <!-- No hardcoded recipients. They are resolved at send time from Contacts
+             tagged "Responsable Qualite FutureKawa" (see quality_alert.py). The
+             empty value clears any previously-stored address on module upgrade. -->
+        <field name="email_to"></field>
+        <field name="subject">[FutureKawa] Alerte {{ object.niveau }} - {{ object.entrepot_nom }} ({{ object.name }})</field>
+        <field name="auto_delete" eval="False"/>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, Helvetica, sans-serif; color: #333;">
+                <p>Bonjour,</p>
+                <p>Une <strong>alerte qualite</strong> vient d'etre enregistree sur la plateforme FutureKawa.</p>
+                <table style="border-collapse: collapse; margin: 12px 0;">
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Reference</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.name or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Entrepot</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.entrepot_nom or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Pays</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.pays_code or '-'"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Niveau</td>
+                        <td style="padding: 4px 12px; color: #c0392b; font-weight: bold;"><t t-out="object.niveau or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Type</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.type_anomaly or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Date de detection</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.date_creation or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold; vertical-align: top;">Description</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.message_description or ''"/></td>
+                    </tr>
+                </table>
+                <p>Merci de traiter cette fiche dans l'interface Odoo (FutureKawa Quality &gt; Alertes).</p>
+                <p style="color: #888; font-size: 12px;">Message automatique - ne pas repondre.</p>
+            </div>
+        </field>
+    </record>
+</odoo>
