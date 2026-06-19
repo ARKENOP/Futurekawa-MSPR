@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
+import com.futurekawa.backendlocal.model.enums.StatutAlerte;
 import com.futurekawa.backendlocal.model.enums.TypeAlerte;
 
 import lombok.RequiredArgsConstructor;
@@ -65,6 +66,47 @@ public class OdooQualityAlertService {
         } catch (Exception e) {
             log.error("Failed to push alert (backendId={}) to Odoo", backendAlerteId, e);
         }
+    }
+
+    /**
+     * Propagates a status change to the matching Odoo ticket (one-way:
+     * local backend is the source of truth). The ticket is located by its
+     * {@code backend_alerte_id}. Runs asynchronously; failures are logged only.
+     */
+    @Async
+    public void updateAlerteStatut(Long backendAlerteId, StatutAlerte statut) {
+        try {
+            Object searchResult = odooRpcClient.executeKw(
+                    MODEL, "search",
+                    List.of(List.of(List.of("backend_alerte_id", "=", backendAlerteId))),
+                    Map.of("limit", 1));
+
+            if (!(searchResult instanceof List<?> ids) || ids.isEmpty()) {
+                log.warn("No Odoo ticket found for backendAlerteId={}; status not propagated",
+                        backendAlerteId);
+                return;
+            }
+
+            odooRpcClient.executeKw(
+                    MODEL, "write",
+                    List.of(ids, Map.of("state", toOdooState(statut))),
+                    Map.of());
+
+            log.info("Updated Odoo ticket {} for backendAlerteId={} -> state '{}'",
+                    ids, backendAlerteId, toOdooState(statut));
+
+        } catch (Exception e) {
+            log.error("Failed to update Odoo ticket status for backendAlerteId={}", backendAlerteId, e);
+        }
+    }
+
+    /** Maps the local {@link StatutAlerte} to the Odoo ticket {@code state}. */
+    private String toOdooState(StatutAlerte statut) {
+        return switch (statut) {
+            case OUVERTE -> "draft";
+            case NOTIFIEE -> "investigation";
+            case CLOTUREE -> "resolved";
+        };
     }
 
     /** Odoo stores datetimes as naive UTC strings ("yyyy-MM-dd HH:mm:ss"). */

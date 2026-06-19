@@ -15,6 +15,7 @@ records them as auditable Quality Alert tickets visible in the Odoo interface.
     'data': [
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
+        'data/mail_template_data.xml',
         'views/quality_alert_views.xml',
     ],
     'installable': True,

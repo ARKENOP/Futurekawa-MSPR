@@ -53,6 +53,10 @@ public class AlerteService {
 
         alerte.setStatutAlerte(request.statutAlerte());
         Alerte saved = alerteRepository.save(alerte);
+
+        // Local backend is the source of truth: propagate the new status to Odoo.
+        odooQualityAlertService.updateAlerteStatut(saved.getId(), saved.getStatutAlerte());
+
         return alerteMapper.toResponse(saved);
     }
 

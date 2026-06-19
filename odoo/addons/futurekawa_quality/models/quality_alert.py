@@ -1,4 +1,8 @@
+import logging
+
 from odoo import models, fields, api
+
+_logger = logging.getLogger(__name__)
 
 
 class QualityAlert(models.Model):
@@ -70,7 +74,30 @@ class QualityAlert(models.Model):
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'futurekawa.quality.alert') or 'ALT/'
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._notify_quality_team()
+        return records
+
+    def _notify_quality_team(self):
+        """Email the quality team for CRITICAL alerts.
+
+        Failures must never block ticket creation (the backend creates these
+        records over the API), so any mail error is caught and logged.
+        """
+        template = self.env.ref(
+            'futurekawa_quality.mail_template_quality_alert',
+            raise_if_not_found=False)
+        if not template:
+            return
+        for record in self:
+            if record.niveau != 'critique':
+                continue
+            try:
+                template.send_mail(record.id, force_send=True)
+                _logger.info("Quality alert email sent for %s", record.name)
+            except Exception:
+                _logger.exception(
+                    "Failed to send quality alert email for %s", record.name)
 
     def action_investigate(self):
         self.write({'state': 'investigation'})
