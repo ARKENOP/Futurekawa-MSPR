@@ -1,0 +1,116 @@
+# ==============================================================================
+# FutureKawa Backend Local — Application Configuration
+# ==============================================================================
+# All values use ${ENV_VAR} placeholders resolved from the .env file
+# via Docker Compose environment injection.
+# ==============================================================================
+
+spring:
+  application:
+    name: backend-local-${COUNTRY_CODE:XX}
+
+  # ── JPA + Hibernate ────────────────────────────────────────────────────────
+  jpa:
+    hibernate:
+      # BETA: Hibernate creates/updates tables from the @Entity classes.
+      # Switch back to `validate` once a managed schema (Flyway) exists.
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  # ── PostgreSQL DataSource ──────────────────────────────────────────────────
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:futurekawa}
+    username: ${POSTGRES_USER:futurekawa}
+    password: ${POSTGRES_PASSWORD:changeme}
+    driver-class-name: org.postgresql.Driver
+
+  # ── Jackson 2 ────────────────────────────────────────────────────────────
+  # This app uses the Jackson 2 API (spring-boot-jackson2). In Spring Boot 4
+  # the plain `spring.jackson.*` keys target Jackson 3, so Jackson 2 config
+  # lives under `spring.jackson2.*`.
+  jackson2:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+  # Use Jackson 2 for HTTP message conversion so @JsonProperty is honoured.
+  http:
+    converters:
+      preferred-json-mapper: jackson2
+
+  # ── Pagination defaults ──────────────────────────────────────────────────
+  # Sensible Pageable defaults + a hard cap so an oversized `size` query param
+  # can never translate into an unbounded DB fetch.
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+
+# ── Server ─────────────────────────────────────────────────────────────────────
+server:
+  port: ${SERVER_PORT:8081}
+  # Trust X-Forwarded-* headers from the Cloudflare Tunnel reverse proxy so
+  # Swagger UI / redirects use the public hostname instead of localhost:8081.
+  forward-headers-strategy: framework
+
+# ── Actuator ───────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ── Springdoc / Swagger UI ─────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Custom application properties (bound via @ConfigurationProperties)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Country / Pays ───────────────────────────────────────────────────────────
+futurekawa:
+  pays:
+    code: ${COUNTRY_CODE:BR}
+    nom: ${COUNTRY_NAME:Brésil}
+    temperature-ideale-c: ${TEMPERATURE_IDEALE_C:29}
+    humidite-ideale-pourcent: ${HUMIDITE_IDEALE_POURCENT:55}
+    tolerance-temperature-c: ${TOLERANCE_TEMPERATURE_C:3}
+    tolerance-humidite-pourcent: ${TOLERANCE_HUMIDITE_POURCENT:2}
+    duree-max-stockage-jours: ${DUREE_MAX_STOCKAGE_JOURS:365}
+
+  # ── MQTT ─────────────────────────────────────────────────────────────────
+  mqtt:
+    broker-url: ${MQTT_BROKER_URL:tcp://localhost:1883}
+    topic: ${MQTT_TOPIC:futurekawa/BR/entrepot/+/mesures}
+    client-id: ${MQTT_CLIENT_ID:backend-local-BR}
+    qos: ${MQTT_QOS:1}
+
+  # ── Odoo Integration ──────────────────────────────────────────────────────
+  odoo:
+    url: ${ODOO_URL:http://localhost:8069}
+    db: ${ODOO_DB:futurekawa}
+    api-user: ${ODOO_API_USER:api-backend@futurekawa.local}
+    api-key: ${ODOO_API_KEY:changeme-odoo-api-key}
+    alerte-destinataire-email: ${ALERTE_DESTINATAIRE_EMAIL:responsable@futurekawa.local}
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  level:
+    com.futurekawa: DEBUG
+    org.springframework.integration.mqtt: INFO
+    org.hibernate.SQL: DEBUG
