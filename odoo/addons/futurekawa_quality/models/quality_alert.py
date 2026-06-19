@@ -81,20 +81,39 @@ class QualityAlert(models.Model):
     def _notify_quality_team(self):
         """Email the quality team for CRITICAL alerts.
 
-        Failures must never block ticket creation (the backend creates these
-        records over the API), so any mail error is caught and logged.
+        Recipients are resolved dynamically from the Contacts tagged
+        "Responsable Qualite FutureKawa" (no hardcoded addresses). Failures must
+        never block ticket creation (the backend creates these records over the
+        API), so any mail error is caught and logged.
         """
         template = self.env.ref(
             'futurekawa_quality.mail_template_quality_alert',
             raise_if_not_found=False)
-        if not template:
+        category = self.env.ref(
+            'futurekawa_quality.partner_category_responsable_qualite',
+            raise_if_not_found=False)
+        if not template or not category:
             return
+
+        recipients = self.env['res.partner'].search([
+            ('category_id', 'in', category.ids),
+            ('email', '!=', False),
+        ])
+        if not recipients:
+            _logger.warning(
+                "No 'Responsable Qualite FutureKawa' contact has an email; "
+                "critical-alert email skipped.")
+            return
+
         for record in self:
             if record.niveau != 'critique':
                 continue
             try:
-                template.send_mail(record.id, force_send=True)
-                _logger.info("Quality alert email sent for %s", record.name)
+                template.send_mail(
+                    record.id, force_send=True,
+                    email_values={'recipient_ids': [(6, 0, recipients.ids)]})
+                _logger.info("Quality alert email sent for %s to %d recipient(s)",
+                             record.name, len(recipients))
             except Exception:
                 _logger.exception(
                     "Failed to send quality alert email for %s", record.name)

@@ -9,7 +9,10 @@
         <field name="name">Alerte Qualite FutureKawa</field>
         <field name="model_id" ref="futurekawa_quality.model_futurekawa_quality_alert"/>
         <field name="email_from">herciualin10@gmail.com</field>
-        <field name="email_to">herciualin10@gmail.com,mathys.perols@ecoles-epsi.net,paul.supiot@ecoles-epsi.net,terry.barillon@ecoles-epsi.net</field>
+        <!-- No hardcoded recipients. They are resolved at send time from Contacts
+             tagged "Responsable Qualite FutureKawa" (see quality_alert.py). The
+             empty value clears any previously-stored address on module upgrade. -->
+        <field name="email_to"></field>
         <field name="subject">[FutureKawa] Alerte {{ object.niveau }} - {{ object.entrepot_nom }} ({{ object.name }})</field>
         <field name="auto_delete" eval="False"/>
         <field name="body_html" type="html">

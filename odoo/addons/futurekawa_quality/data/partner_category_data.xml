@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Contact tag used to define who receives critical-alert emails.
+        Tag any Contact (Contacts app) with "Responsable Qualite FutureKawa"
+        and it will be emailed. No addresses are stored in source.
+    -->
+    <record id="partner_category_responsable_qualite" model="res.partner.category">
+        <field name="name">Responsable Qualite FutureKawa</field>
+        <field name="color">1</field>
+    </record>
+</odoo>
