@@ -18,7 +18,8 @@ import com.futurekawa.backendlocal.model.MesureStockage;
 import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
 import com.futurekawa.backendlocal.model.enums.StatutAlerte;
 import com.futurekawa.backendlocal.model.enums.TypeAlerte;
-import com.futurekawa.backendlocal.odoo.OdooEmailService;
+import com.futurekawa.backendlocal.config.PaysProperties;
+import com.futurekawa.backendlocal.odoo.OdooQualityAlertService;
 import com.futurekawa.backendlocal.repository.AlerteRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,8 @@ public class AlerteService {
 
     private final AlerteRepository alerteRepository;
     private final AlerteMapper alerteMapper;
-    private final OdooEmailService odooEmailService;
+    private final OdooQualityAlertService odooQualityAlertService;
+    private final PaysProperties paysProperties;
 
     public Page<AlerteResponse> listAll(Pageable pageable) {
         return alerteRepository.findAll(pageable).map(alerteMapper::toResponse);
@@ -72,11 +74,18 @@ public class AlerteService {
                     alerte.setDateHeureCreation(LocalDateTime.now());
                     alerte.setMessageDescription(description);
 
-                    alerteRepository.save(alerte);
+                    Alerte saved = alerteRepository.save(alerte);
 
-                    odooEmailService.sendAlertEmail(
-                            "[FutureKawa] Alert " + niveau + " - Entrepôt " + entrepot.getNomEntrepot(),
-                            description
+                    String lotReference = mesure.getLot() != null ? mesure.getLot().getReferenceLot() : null;
+                    odooQualityAlertService.pushAlerte(
+                            saved.getId(),
+                            entrepot.getNomEntrepot(),
+                            paysProperties.code(),
+                            TypeAlerte.CONDITION_NON_IDEALE,
+                            niveau,
+                            lotReference,
+                            description,
+                            saved.getDateHeureCreation()
                     );
                 }
         );
@@ -93,11 +102,17 @@ public class AlerteService {
         alerte.setDateHeureCreation(LocalDateTime.now());
         alerte.setMessageDescription(description);
 
-        alerteRepository.save(alerte);
+        Alerte saved = alerteRepository.save(alerte);
 
-        odooEmailService.sendAlertEmail(
-                "[FutureKawa] CRITICAL - Lot expired in " + entrepot.getNomEntrepot(),
-                description
+        odooQualityAlertService.pushAlerte(
+                saved.getId(),
+                entrepot.getNomEntrepot(),
+                paysProperties.code(),
+                TypeAlerte.LOT_TROP_ANCIEN,
+                NiveauAlerte.CRITIQUE,
+                lot.getReferenceLot(),
+                description,
+                saved.getDateHeureCreation()
         );
     }
 }
