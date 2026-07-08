@@ -29,6 +29,10 @@ jobs:
       - name: Build and test with Maven
         run: mvn -B clean verify
 
+      # Préparation pour Docker (Le Dockerfile attend le .jar à la racine)
+      - name: Prepare Jar
+        run: cp target/backend-local-*.jar backend-local.jar
+
       # 2. Packaging (Image Docker)
       - name: Build Docker Image
         run: docker build -t futurekawa/backend-local:latest -f Dockerfile .
@@ -62,6 +66,10 @@ jobs:
       # 1. Build, Tests automatisés et Qualité (Maven)
       - name: Build and test with Maven
         run: mvn -B clean verify
+
+      # Préparation pour Docker (Le Dockerfile attend le .jar à la racine)
+      - name: Prepare Jar
+        run: cp target/backend-central-*.jar backend-central.jar
 
       # 2. Packaging (Image Docker)
       - name: Build Docker Image
