@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend-local:
-    name: Build & Test Backend Local
+    name: Build, Test & Package Backend Local
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,11 +25,24 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      # 1. Build, Tests automatisés et Qualité (Maven)
       - name: Build and test with Maven
         run: mvn -B clean verify
 
+      # 2. Packaging (Image Docker)
+      - name: Build Docker Image
+        run: docker build -t futurekawa/backend-local:latest -f Dockerfile .
+
+      # 3. Mise à disposition d'artefacts (.jar compilé)
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-local-jar
+          path: backend-local/target/*.jar
+          retention-days: 5
+
   backend-central:
-    name: Build & Test Backend Central
+    name: Build, Test & Package Backend Central
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -46,11 +59,24 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      # 1. Build, Tests automatisés et Qualité (Maven)
       - name: Build and test with Maven
         run: mvn -B clean verify
 
+      # 2. Packaging (Image Docker)
+      - name: Build Docker Image
+        run: docker build -t futurekawa/backend-central:latest -f Dockerfile .
+
+      # 3. Mise à disposition d'artefacts (.jar compilé)
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-central-jar
+          path: backend-central/target/*.jar
+          retention-days: 5
+
   frontend:
-    name: Build Frontend Web
+    name: Build, Quality & Package Frontend Web
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -84,11 +110,24 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      # 1. Build dependencies
       - name: Install dependencies
         run: pnpm install
 
-      - name: Typecheck
-        run: pnpm run typecheck
+      # 2. Vérification Qualité (Linter & Typecheck)
+      - name: Code Quality (Lint & Typecheck)
+        run: |
+          pnpm run lint
+          pnpm run typecheck
 
-      - name: Build
+      # 3. Packaging (Compilation pour le Web)
+      - name: Build production files
         run: pnpm run build
+
+      # 4. Mise à disposition d'artefacts (Dossier /dist exploitable)
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend-web/dist/
+          retention-days: 5
