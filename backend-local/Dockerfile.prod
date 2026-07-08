@@ -1,0 +1,40 @@
+# ==============================================================================
+# FutureKawa Backend Local — PRODUCTION image (self-contained multi-stage)
+# ==============================================================================
+# Stage 1 builds the Spring Boot fat jar from source with Maven (JDK 25), so a
+# fresh checkout deploys with `docker compose -f docker-compose.prod.yml up -d`
+# and needs no host-side JDK/Maven.
+# Stage 2 runs that jar on a lean JRE.
+#
+# Tests are skipped: the single OpenApiExportTest is not yet ported to
+# Spring Boot 4. Remove -Dmaven.test.skip=true once it is.
+# ==============================================================================
+
+# ── Stage 1: build ───────────────────────────────────────────────────────────
+FROM maven:3.9-eclipse-temurin-25 AS build
+WORKDIR /build
+
+# Resolve dependencies first so they cache across source-only changes.
+COPY pom.xml .
+RUN mvn -B -q dependency:go-offline
+
+COPY src ./src
+RUN mvn -B -q -Dmaven.test.skip=true clean package
+
+# ── Stage 2: runtime ─────────────────────────────────────────────────────────
+FROM eclipse-temurin:25-jre
+WORKDIR /app
+
+# curl is used by the compose healthcheck to poll the actuator endpoint.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Run as a non-root user in production.
+RUN useradd -r -u 1001 -s /usr/sbin/nologin futurekawa
+USER futurekawa
+
+COPY --from=build /build/target/backend-local-0.1.0-SNAPSHOT.jar /app/backend-local.jar
+
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "/app/backend-local.jar"]
