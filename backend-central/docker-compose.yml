@@ -1,0 +1,10 @@
+services:
+  backend-central:
+    build: .
+    image: futurekawa/backend-central:latest
+    container_name: futurekawa-backend-central
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8090:8090"

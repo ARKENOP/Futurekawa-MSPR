@@ -1,0 +1,40 @@
+package com.futurekawa.backendcentral.circuitbreaker;
+
+import java.util.function.Function;
+
+import org.springframework.stereotype.Component;
+
+import com.futurekawa.backendcentral.client.LocalBackendClient;
+import com.futurekawa.backendcentral.exception.LocalBackendUnavailableException;
+import com.futurekawa.backendcentral.exception.UnknownCountryException;
+import com.futurekawa.backendcentral.registry.CountryRegistry;
+
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+
+/**
+ * Exécute un appel vers un unique backend local (ressource unitaire routée par
+ * codePays). Contrairement au fan-out, un échec ici est fatal pour la requête :
+ * il est propagé en LocalBackendUnavailableException -> 503 (§5).
+ */
+@Component
+public class UnitaryCallExecutor {
+
+    private final CountryRegistry countryRegistry;
+    private final CountryCircuitBreakers circuitBreakers;
+
+    public UnitaryCallExecutor(CountryRegistry countryRegistry, CountryCircuitBreakers circuitBreakers) {
+        this.countryRegistry = countryRegistry;
+        this.circuitBreakers = circuitBreakers;
+    }
+
+    public <T> T call(String codePays, Function<LocalBackendClient, T> call) {
+        LocalBackendClient client = countryRegistry.client(codePays)
+                .orElseThrow(() -> new UnknownCountryException(codePays));
+        CircuitBreaker circuitBreaker = circuitBreakers.forCountry(codePays);
+        try {
+            return circuitBreaker.executeSupplier(() -> call.apply(client));
+        } catch (Exception e) {
+            throw new LocalBackendUnavailableException(codePays, e);
+        }
+    }
+}
