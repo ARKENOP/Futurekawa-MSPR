@@ -1,6 +1,7 @@
 package com.futurekawa.backendlocal.config;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -14,8 +15,13 @@ import org.springframework.messaging.MessageChannel;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * MQTT inbound wiring. Disabled with {@code futurekawa.mqtt.enabled=false}
+ * (e.g. in the test profile) so the context can start without a live broker.
+ */
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "futurekawa.mqtt", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MqttConfig {
 
     private final MqttProperties mqttProperties;
