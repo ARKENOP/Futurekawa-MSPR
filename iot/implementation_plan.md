@@ -1,5 +1,14 @@
 # IoT Module — Implementation Plan
 
+> **Historical document.** This plan targeted an ESP32. The board actually available was an
+> **Arduino Uno**, which has no network interface, so the delivered design differs: the Uno
+> prints one JSON line per reading on the USB serial port and a small Python **serial → MQTT
+> bridge** running on the host publishes it to Mosquitto. Wi-Fi, TLS and NTP sections below
+> therefore do not apply to what was built.
+>
+> For the as-built module — wiring, protocol, commissioning — read
+> [`README.md`](README.md), which documents the Arduino Uno + bridge pipeline.
+
 ## 1. Vision
 
 A standalone **ESP32 + DHT22** prototype that reads temperature and humidity at a configurable interval, then publishes JSON payloads to the local **Eclipse Mosquitto** MQTT broker over Wi-Fi.

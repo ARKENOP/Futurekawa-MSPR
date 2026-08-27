@@ -52,8 +52,10 @@ services:
   # ── Backend Local (Spring Boot) ──────────────────────────────────────────────
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.prod
+      # Context is the repository root: the image builds backend-local together
+      # with the futurekawa-lib module it depends on.
+      context: ..
+      dockerfile: backend-local/Dockerfile.prod
     image: futurekawa/backend-local:latest
     container_name: futurekawa-backend
     restart: unless-stopped

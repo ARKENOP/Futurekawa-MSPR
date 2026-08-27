@@ -7,21 +7,20 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriBuilder;
 
-import com.futurekawa.backendcentral.dto.enums.StatutAlerte;
-import com.futurekawa.backendcentral.dto.enums.StatutLot;
-import com.futurekawa.backendcentral.dto.enums.TypeAlerte;
 import com.futurekawa.backendcentral.dto.envelope.PageDto;
-import com.futurekawa.backendcentral.dto.request.CreateLotRequest;
-import com.futurekawa.backendcentral.dto.request.UpdateAlerteRequest;
-import com.futurekawa.backendcentral.dto.request.UpdateLotRequest;
-import com.futurekawa.backendcentral.dto.response.Alerte;
-import com.futurekawa.backendcentral.dto.response.Entrepot;
-import com.futurekawa.backendcentral.dto.response.Exploitation;
-import com.futurekawa.backendcentral.dto.response.Lot;
-import com.futurekawa.backendcentral.dto.response.MesureStockage;
-import com.futurekawa.backendcentral.dto.response.Pays;
+import com.futurekawa.lib.dto.request.CreateLotRequest;
+import com.futurekawa.lib.dto.request.UpdateAlerteRequest;
+import com.futurekawa.lib.dto.request.UpdateLotRequest;
+import com.futurekawa.lib.dto.response.AlerteResponse;
+import com.futurekawa.lib.dto.response.EntrepotResponse;
+import com.futurekawa.lib.dto.response.ExploitationResponse;
+import com.futurekawa.lib.dto.response.LotResponse;
+import com.futurekawa.lib.dto.response.MesureStockageResponse;
+import com.futurekawa.lib.dto.response.PaysResponse;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.StatutLot;
+import com.futurekawa.lib.enums.TypeAlerte;
 
-/** Implémentation RestClient (bloquante) de LocalBackendClient, une instance par backend local. */
 public class RestClientLocalBackendClient implements LocalBackendClient {
 
     private final RestClient restClient;
@@ -31,18 +30,18 @@ public class RestClientLocalBackendClient implements LocalBackendClient {
     }
 
     @Override
-    public Pays getPays() {
-        return restClient.get().uri("/api/v1/pays").retrieve().body(Pays.class);
+    public PaysResponse getPays() {
+        return restClient.get().uri("/api/v1/pays").retrieve().body(PaysResponse.class);
     }
 
     @Override
-    public List<Exploitation> getExploitations() {
+    public List<ExploitationResponse> getExploitations() {
         return restClient.get().uri("/api/v1/exploitations").retrieve()
                 .body(new ParameterizedTypeReference<>() {});
     }
 
     @Override
-    public List<Entrepot> getEntrepots(Long exploitationId) {
+    public List<EntrepotResponse> getEntrepots(Long exploitationId) {
         return restClient.get()
                 .uri(uriBuilder -> {
                     UriBuilder builder = uriBuilder.path("/api/v1/entrepots");
@@ -56,12 +55,12 @@ public class RestClientLocalBackendClient implements LocalBackendClient {
     }
 
     @Override
-    public Entrepot getEntrepot(Long id) {
-        return restClient.get().uri("/api/v1/entrepots/{id}", id).retrieve().body(Entrepot.class);
+    public EntrepotResponse getEntrepot(Long id) {
+        return restClient.get().uri("/api/v1/entrepots/{id}", id).retrieve().body(EntrepotResponse.class);
     }
 
     @Override
-    public PageDto<Lot> getLots(StatutLot statutLot, int page, int size) {
+    public PageDto<LotResponse> getLots(StatutLot statutLot, int page, int size) {
         return restClient.get()
                 .uri(uriBuilder -> {
                     UriBuilder builder = uriBuilder.path("/api/v1/lots")
@@ -77,29 +76,22 @@ public class RestClientLocalBackendClient implements LocalBackendClient {
     }
 
     @Override
-    public Lot getLot(Long id) {
-        return restClient.get().uri("/api/v1/lots/{id}", id).retrieve().body(Lot.class);
+    public LotResponse getLot(Long id) {
+        return restClient.get().uri("/api/v1/lots/{id}", id).retrieve().body(LotResponse.class);
     }
 
     @Override
-    public Lot createLot(CreateLotRequest request) {
-        LocalCreateLotPayload payload = new LocalCreateLotPayload(
-                request.referenceLot(),
-                request.dateEntreeStockage(),
-                request.dateRecolte(),
-                request.qualiteLot(),
-                request.exploitationId(),
-                request.entrepotId());
-        return restClient.post().uri("/api/v1/lots").body(payload).retrieve().body(Lot.class);
+    public LotResponse createLot(CreateLotRequest request) {
+        return restClient.post().uri("/api/v1/lots").body(request).retrieve().body(LotResponse.class);
     }
 
     @Override
-    public Lot updateLot(Long id, UpdateLotRequest request) {
-        return restClient.patch().uri("/api/v1/lots/{id}", id).body(request).retrieve().body(Lot.class);
+    public LotResponse updateLot(Long id, UpdateLotRequest request) {
+        return restClient.patch().uri("/api/v1/lots/{id}", id).body(request).retrieve().body(LotResponse.class);
     }
 
     @Override
-    public PageDto<Alerte> getAlertes(StatutAlerte statutAlerte, TypeAlerte typeAlerte, int page, int size) {
+    public PageDto<AlerteResponse> getAlertes(StatutAlerte statutAlerte, TypeAlerte typeAlerte, int page, int size) {
         return restClient.get()
                 .uri(uriBuilder -> {
                     UriBuilder builder = uriBuilder.path("/api/v1/alertes")
@@ -118,17 +110,18 @@ public class RestClientLocalBackendClient implements LocalBackendClient {
     }
 
     @Override
-    public Alerte getAlerte(Long id) {
-        return restClient.get().uri("/api/v1/alertes/{id}", id).retrieve().body(Alerte.class);
+    public AlerteResponse getAlerte(Long id) {
+        return restClient.get().uri("/api/v1/alertes/{id}", id).retrieve().body(AlerteResponse.class);
     }
 
     @Override
-    public Alerte updateAlerte(Long id, UpdateAlerteRequest request) {
-        return restClient.patch().uri("/api/v1/alertes/{id}", id).body(request).retrieve().body(Alerte.class);
+    public AlerteResponse updateAlerte(Long id, UpdateAlerteRequest request) {
+        return restClient.patch().uri("/api/v1/alertes/{id}", id).body(request).retrieve().body(AlerteResponse.class);
     }
 
     @Override
-    public PageDto<MesureStockage> getMesures(Long entrepotId, LocalDateTime from, LocalDateTime to, int page, int size) {
+    public PageDto<MesureStockageResponse> getMesures(Long entrepotId, LocalDateTime from, LocalDateTime to,
+                                                       int page, int size) {
         return restClient.get()
                 .uri(uriBuilder -> {
                     UriBuilder builder = uriBuilder.path("/api/v1/entrepots/{entrepotId}/mesures")
@@ -147,8 +140,8 @@ public class RestClientLocalBackendClient implements LocalBackendClient {
     }
 
     @Override
-    public MesureStockage getLatestMesure(Long entrepotId) {
+    public MesureStockageResponse getLatestMesure(Long entrepotId) {
         return restClient.get().uri("/api/v1/entrepots/{entrepotId}/mesures/latest", entrepotId)
-                .retrieve().body(MesureStockage.class);
+                .retrieve().body(MesureStockageResponse.class);
     }
 }

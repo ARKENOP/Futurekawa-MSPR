@@ -1,48 +1,121 @@
-# Plan de Tests - FutureKawa
+# Plan de Tests — FutureKawa
 
-Ce document décrit la stratégie de test appliquée au projet FutureKawa, couvrant l'ensemble de la chaîne de valeur applicative : depuis le backend local (IoT/Java) jusqu'au frontend Web. 
+Ce document décrit la stratégie de test du projet et son état d'exécution réel, depuis le
+backend pays (Java/IoT) jusqu'à l'interface web.
+
+> État au 27/08/2026. Les chiffres cités sont ceux produits par `mvn clean verify` à la
+> racine du dépôt.
 
 ## 1. Typologie des tests
 
-Pour garantir la stabilité de l'architecture distribuée et de l'interface, nous avons mis en œuvre trois niveaux de tests :
+### 1.1 Tests unitaires (backend)
 
-### 1.1 Tests Unitaires (Backend)
-- **Objectif** : Valider la logique métier isolée de chaque service (ex: service de détection des péremptions, service de calcul de FIFO).
-- **Outils** : JUnit 5, Mockito.
-- **Périmètre** : Couverture des services Spring Boot (ex: `LotServiceTest`, `AlerteServiceTest`).
+- **Objectif** : valider la logique métier isolée — détection de dépassement de seuil,
+  déduplication d'alerte, péremption des lots, mapping entité ↔ DTO.
+- **Outils** : JUnit 5 + Mockito, sans contexte Spring.
+- **Périmètre** : `LotServiceTest`, `AlerteServiceTest`, `MesureServiceTest`,
+  `PaysServiceTest`, `EntrepotServiceTest`, `ExploitationServiceTest`,
+  `PeremptionSchedulerTest`, `MqttMessageHandlerTest`, `OdooQualityAlertServiceTest`,
+  `MapperTest`.
 
-### 1.2 Tests d'Intégration (API & Base de données)
-- **Objectif** : Vérifier que les composants communiquent correctement entre eux (Persistance SQL, réception des messages MQTT via le Broker).
-- **Outils** : Spring Boot Test, Testcontainers (pour la BDD SQL et Mosquitto).
-- **Périmètre** : Routes API REST (ex: `LotApiIntegrationTest`).
+### 1.2 Tests d'intégration (API et base de données)
 
-### 1.3 Tests de Recette & End-to-End (UI)
-- **Objectif** : Simuler le parcours d'un utilisateur final (Magasinier, Qualiticien) sur l'interface Web pour s'assurer que les données consolidées s'affichent correctement.
-- **Outil retenu** : **Selenium** (via Python).
+- **Objectif** : vérifier la chaîne complète contrôleur → service → repository → base, et
+  le contrat d'erreur RFC 7807.
+- **Outils** : `@SpringBootTest(RANDOM_PORT)` avec un `RestClient` qui attaque l'application
+  en HTTP réel, profil `test`.
+- **Base de test : H2 en mode compatibilité PostgreSQL** (`MODE=PostgreSQL`), pas
+  Testcontainers. Décision assumée : Testcontainers échoue sur la version de Docker de la
+  machine de développement (négociation d'API entre Docker 29 et le client docker-java
+  embarqué). Le code n'utilise que du JPA/JPQL standard, sans SQL natif PostgreSQL, donc
+  H2 couvre le même périmètre — au prix de ne pas valider les spécificités du moteur.
+  `mvn verify` ne demande donc **ni base externe ni démon Docker**.
+- **Périmètre** : `LotApiIntegrationTest`, `MesureAlerteApiIntegrationTest`,
+  `EntrepotExploitationApiIntegrationTest`, `PaysApiIntegrationTest`,
+  `LotRepositoryIntegrationTest`, `OpenApiExportTest` (qui régénère
+  `backend-local/api/openapi.yml`).
+- Le broker MQTT n'est pas requis : `MqttConfig` est désactivé dans le profil de test
+  (`futurekawa.mqtt.enabled=false`), l'ingestion étant couverte au niveau unitaire par
+  `MqttMessageHandlerTest`.
 
----
+### 1.3 Couverture
 
-## 2. Jeux d'essai et Cas de Test (Recette Fonctionnelle)
+- **Outil** : JaCoCo 0.8.13.
+- **Barrière** : 80 % de lignes sur le bundle `backend-local`, liée à la phase `verify`
+  (donc `mvn test` reste vert, seul `mvn verify` bloque). Sont exclus la classe de
+  démarrage, le câblage de configuration (`MqttConfig`, `RestClientConfig`, `OpenApiConfig`)
+  et les records `*Properties`.
+- **Résultat courant** : 68 tests, 0 échec, ~83 % de lignes couvertes.
+- **Lacunes connues** : `OdooRpcClient` (appels JSON-RPC HTTP) et les `equals`/`hashCode`
+  des entités sont peu couverts.
 
-La phase de test de l'interface s'appuie sur le jeu d'essai suivant :
+### 1.4 Tests de recette et bout en bout (UI)
 
-| Donnée injectée | Contexte / Contrainte | Résultat Attendu sur l'Interface (Web) |
+- **Objectif** : simuler le parcours d'un utilisateur du siège (magasinier, qualiticien) et
+  vérifier que les données consolidées s'affichent.
+- **Outil retenu** : **Selenium** piloté en Python (`tests-e2e/test_ui.py`).
+
+## 2. Jeux d'essai et cas de test (recette fonctionnelle)
+
+| Donnée injectée | Contexte / contrainte | Résultat attendu sur l'interface |
 | :--- | :--- | :--- |
-| Lot `LOT-BR-001` | Température actuelle : 29°C, Humidité : 55% | Le lot s'affiche avec le statut **CONFORME** (Pastille verte). Aucune alerte. |
-| Lot `LOT-CO-999` | Température actuelle : 38°C (Colombie) | La courbe de température dépasse le seuil. Statut **ALERTE**. Une notification d'alerte rouge est visible. |
-| Lot `LOT-EQ-OLD` | Date d'entrée : 15 Mars de l'année N-2 | Le lot dépasse 365 jours de stockage. Une alerte de type "Péremption FIFO" est levée. |
+| Lot `LOT-BR-001` | Température 29 °C, humidité 55 % (dans la tolérance Brésil) | Le lot s'affiche avec le statut **CONFORME** (pastille verte). Aucune alerte. |
+| Lot `LOT-CO-999` | Température 38 °C en Colombie (seuil 26 °C ± 3) | La courbe dépasse le seuil, le lot passe **EN_ALERTE**, une alerte `CONDITION_NON_IDEALE` de niveau `CRITIQUE` apparaît, et une fiche est créée dans Odoo avec envoi d'e-mail. |
+| Lot `LOT-EQ-OLD` | Date d'entrée en stockage > 365 jours | Alerte `LOT_TROP_ANCIEN` levée par le job horaire, lot marqué **PERIME**. |
+| Backend d'un pays arrêté | Le siège interroge trois pays, un seul est indisponible | La réponse reste `200 OK` avec les pays disponibles, l'en-tête `X-Unavailable-Countries` liste le pays absent et le frontend affiche un bandeau d'avertissement. |
 
----
+### Injection des jeux d'essai
 
-## 3. Mise en œuvre et Testabilité (Outil : Selenium)
+La détection d'alerte se déclenche à la publication MQTT, ce qui permet de rejouer les
+scénarios sans capteur :
 
-Pour valider l'affichage des données remontées par les capteurs IoT, nous avons développé un script de test automatisé avec **Selenium WebDriver**.
+```bash
+mosquitto_pub -h <broker> -t 'futurekawa/BR/entrepot/1/mesures' \
+  -m '{"id_capteur":"test-01","temperature_c":38.0,"humidite_pourcent":58.0,"timestamp":1756288000000}'
+```
 
-**Parcours du test (Scénario automatisé) :**
-1. Lancement du navigateur (Chrome) en mode fantôme (Headless).
-2. Connexion à l'URL du Dashboard central (`frontend-web`).
-3. Accès à la page "Alertes".
-4. Vérification de la présence d'un élément d'alerte (HTML) correspondant au Lot `LOT-CO-999`.
-5. Génération d'un rapport de succès ou d'échec dans la console.
+## 3. Exécution
 
-Ce test peut être déclenché localement par les développeurs pour valider la non-régression de l'interface avant toute mise en production.
+```bash
+mvn clean verify        # unitaires + intégration + couverture, à la racine du dépôt
+```
+
+Rapport de couverture : `backend-local/target/site/jacoco/index.html`.
+
+```bash
+cd tests-e2e
+pip install -r requirements.txt
+python test_ui.py       # nécessite chromedriver et le frontend démarré
+```
+
+Le frontend est également contrôlé en CI par `pnpm run lint` et `pnpm run typecheck`
+(typage strict `vue-tsc`), puis par un build de production.
+
+## 4. Intégration continue
+
+Le workflow `.github/workflows/ci.yml` exécute, sur `main` et `develop` et sur chaque
+pull request :
+
+1. `mvn -B clean verify` sur le réacteur complet (les trois modules Java), donc les 68
+   tests et la barrière de couverture ;
+2. la construction des deux images Docker de production ;
+3. le lint, le typecheck et le build du frontend ;
+4. la publication des jars, des rapports JaCoCo et du `dist/` frontend comme artefacts.
+
+## 5. Limites connues du dispositif
+
+À corriger avant la soutenance, par ordre d'importance :
+
+1. **`tests-e2e/test_ui.py` ne vérifie presque rien** : le script ouvre le tableau de bord
+   et lit le titre de la page, mais les assertions sur le contenu (présence de l'alerte du
+   lot `LOT-CO-999`) sont commentées. Il faut ajouter des identifiants stables aux
+   composants Vue puis activer ces assertions.
+2. **`backend-central` n'a aucun test** : le plugin JaCoCo est en place mais sans barrière,
+   précisément parce qu'un seuil échouerait faute de tests. Les cibles prioritaires sont le
+   fan-out (un pays en panne est omis, l'en-tête est posé), le routage par `codePays`, et le
+   mapping `CreateLotRequest` → contrat local.
+3. **Aucun test unitaire de composant frontend** : pas de Vitest ni de Vue Test Utils, seuls
+   le lint, le typecheck et le build sont contrôlés.
+4. **Le tri FIFO et les filtres serveur ne sont pas testés** parce qu'ils ne sont pas
+   implémentés côté backend pays (voir `docs/ARCHITECTURE.md` §7) ; le filtrage est
+   actuellement réalisé côté frontend.

@@ -15,10 +15,7 @@ import org.springframework.messaging.MessageChannel;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * MQTT inbound wiring. Disabled with {@code futurekawa.mqtt.enabled=false}
- * (e.g. in the test profile) so the context can start without a live broker.
- */
+// Disabled in the test profile so the context starts without a broker.
 @Configuration
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "futurekawa.mqtt", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -31,7 +28,7 @@ public class MqttConfig {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
         options.setServerURIs(new String[]{mqttProperties.brokerUrl()});
-        // Automatic reconnect and clean session are good defaults for IoT ingestion
+
         options.setAutomaticReconnect(true);
         options.setCleanSession(true);
         factory.setConnectionOptions(options);

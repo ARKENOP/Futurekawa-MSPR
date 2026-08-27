@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
-/** RestClient.Builder partagé, préconfiguré avec les timeouts vers les backends locaux. */
 @Configuration
 public class RestClientConfig {
 

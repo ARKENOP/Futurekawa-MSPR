@@ -5,7 +5,7 @@ info:
     \ metrics. (Deployed per country)"
   version: v0.1.0
 servers:
-- url: http://localhost:33237
+- url: http://localhost:46573
   description: Generated server url
 paths:
   /api/v1/lots:
@@ -500,14 +500,14 @@ components:
         offset:
           type: integer
           format: int64
+        paged:
+          type: boolean
         pageNumber:
           type: integer
           format: int32
         pageSize:
           type: integer
           format: int32
-        paged:
-          type: boolean
         sort:
           $ref: "#/components/schemas/SortObject"
         unpaged:

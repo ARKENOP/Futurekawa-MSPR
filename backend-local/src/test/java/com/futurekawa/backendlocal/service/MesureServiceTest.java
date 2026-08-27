@@ -27,9 +27,9 @@ import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
 import com.futurekawa.backendlocal.mapper.MesureStockageMapper;
 import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.MesureStockage;
-import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
 import com.futurekawa.backendlocal.repository.EntrepotRepository;
 import com.futurekawa.backendlocal.repository.MesureStockageRepository;
+import com.futurekawa.lib.enums.NiveauAlerte;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -54,7 +54,6 @@ class MesureServiceTest {
         entrepot.setId(1L);
         entrepot.setNomEntrepot("Entrepôt BR");
 
-        // Ideal 29°C / 55%, tolerance 3°C / 2% → critical beyond 2× tolerance.
         when(paysProperties.temperatureIdealeC()).thenReturn(new BigDecimal("29"));
         when(paysProperties.humiditeIdealePourcent()).thenReturn(new BigDecimal("55"));
         when(paysProperties.toleranceTemperatureC()).thenReturn(new BigDecimal("3"));
@@ -65,7 +64,6 @@ class MesureServiceTest {
         return new MqttMesurePayload("capteur-1", new BigDecimal(temp), new BigDecimal(hum), 1_718_373_120_000L);
     }
 
-    /** Wires the mapper + repo so saveMesure produces a persisted measure with the given readings. */
     private void stubPersist(String temp, String hum) {
         MesureStockage mesure = new MesureStockage();
         mesure.setTemperatureC(new BigDecimal(temp));
@@ -77,7 +75,7 @@ class MesureServiceTest {
 
     @Test
     void savesMeasureAndRaisesNoAlertWithinTolerance() {
-        stubPersist("30.0", "56.0"); // temp +1 (≤3), hum +1 (≤2)
+        stubPersist("30.0", "56.0");
 
         service.saveMesure(1L, payload("30.0", "56.0"));
 
@@ -87,7 +85,7 @@ class MesureServiceTest {
 
     @Test
     void raisesNoAlertExactlyOnToleranceBoundary() {
-        stubPersist("32.0", "57.0"); // diff exactly 3 and 2 → not strictly greater
+        stubPersist("32.0", "57.0");
 
         service.saveMesure(1L, payload("32.0", "57.0"));
 
@@ -96,7 +94,7 @@ class MesureServiceTest {
 
     @Test
     void raisesWarningWhenTemperatureDriftsBeyondTolerance() {
-        stubPersist("33.0", "55.0"); // temp diff 4 (>3, ≤6)
+        stubPersist("33.0", "55.0");
 
         service.saveMesure(1L, payload("33.0", "55.0"));
 
@@ -105,7 +103,7 @@ class MesureServiceTest {
 
     @Test
     void raisesCriticalWhenTemperatureDriftsBeyondDoubleTolerance() {
-        stubPersist("36.0", "55.0"); // temp diff 7 (>6)
+        stubPersist("36.0", "55.0");
 
         service.saveMesure(1L, payload("36.0", "55.0"));
 
@@ -114,7 +112,7 @@ class MesureServiceTest {
 
     @Test
     void raisesWarningWhenHumidityDriftsBeyondTolerance() {
-        stubPersist("29.0", "58.0"); // hum diff 3 (>2, ≤4)
+        stubPersist("29.0", "58.0");
 
         service.saveMesure(1L, payload("29.0", "58.0"));
 
@@ -123,7 +121,7 @@ class MesureServiceTest {
 
     @Test
     void raisesCriticalWhenHumidityDriftsBeyondDoubleTolerance() {
-        stubPersist("29.0", "60.0"); // hum diff 5 (>4)
+        stubPersist("29.0", "60.0");
 
         service.saveMesure(1L, payload("29.0", "60.0"));
 
@@ -153,7 +151,7 @@ class MesureServiceTest {
     @Test
     void getLatestMapsWhenPresent() {
         MesureStockage mesure = new MesureStockage();
-        var response = new com.futurekawa.backendlocal.dto.response.MesureStockageResponse(
+        var response = new com.futurekawa.lib.dto.response.MesureStockageResponse(
                 1L, "c1", null, null, null, 1L, null);
         when(mesureRepository.findTopByEntrepotIdOrderByDateHeureMesureDesc(1L)).thenReturn(Optional.of(mesure));
         when(mesureMapper.toResponse(mesure)).thenReturn(response);

@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.futurekawa.backendlocal.dto.response.MesureStockageResponse;
 import com.futurekawa.backendlocal.service.MesureService;
+import com.futurekawa.lib.dto.response.MesureStockageResponse;
 
 import lombok.RequiredArgsConstructor;
 

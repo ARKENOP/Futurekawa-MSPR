@@ -9,16 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.futurekawa.backendlocal.config.PaysProperties;
 import com.futurekawa.backendlocal.model.Lot;
-import com.futurekawa.backendlocal.model.enums.StatutLot;
 import com.futurekawa.backendlocal.repository.LotRepository;
 import com.futurekawa.backendlocal.service.AlerteService;
+import com.futurekawa.lib.enums.StatutLot;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Scheduled job to check for expired coffee lots.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -28,10 +25,6 @@ public class PeremptionScheduler {
     private final AlerteService alerteService;
     private final PaysProperties paysProperties;
 
-    /**
-     * Runs every hour at the top of the hour.
-     * Finds lots that have exceeded their maximum storage duration.
-     */
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void checkLotExpirations() {

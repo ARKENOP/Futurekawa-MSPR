@@ -13,11 +13,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.futurekawa.backendlocal.AbstractIntegrationTest;
 
-/**
- * Full-stack tests for the lot endpoints: controller → service → repository →
- * PostgreSQL, plus the RFC 7807 error mappings from GlobalExceptionHandler.
- * Uses the exploitation (id=1) and entrepôt (id=1) seeded by DataInitializer.
- */
 class LotApiIntegrationTest extends AbstractIntegrationTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
@@ -95,7 +90,6 @@ class LotApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void invalidBodyReturns400ValidationProblem() {
-        // referenceLot is blank → @NotBlank violation.
         ResponseEntity<String> response = client.post()
                 .uri("/api/v1/lots")
                 .contentType(MediaType.APPLICATION_JSON)

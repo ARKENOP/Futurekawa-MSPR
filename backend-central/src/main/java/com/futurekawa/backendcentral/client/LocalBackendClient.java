@@ -3,50 +3,49 @@ package com.futurekawa.backendcentral.client;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.futurekawa.backendcentral.dto.enums.StatutAlerte;
-import com.futurekawa.backendcentral.dto.enums.StatutLot;
-import com.futurekawa.backendcentral.dto.enums.TypeAlerte;
 import com.futurekawa.backendcentral.dto.envelope.PageDto;
-import com.futurekawa.backendcentral.dto.request.CreateLotRequest;
-import com.futurekawa.backendcentral.dto.request.UpdateAlerteRequest;
-import com.futurekawa.backendcentral.dto.request.UpdateLotRequest;
-import com.futurekawa.backendcentral.dto.response.Alerte;
-import com.futurekawa.backendcentral.dto.response.Entrepot;
-import com.futurekawa.backendcentral.dto.response.Exploitation;
-import com.futurekawa.backendcentral.dto.response.Lot;
-import com.futurekawa.backendcentral.dto.response.MesureStockage;
-import com.futurekawa.backendcentral.dto.response.Pays;
+import com.futurekawa.lib.dto.request.CreateLotRequest;
+import com.futurekawa.lib.dto.request.UpdateAlerteRequest;
+import com.futurekawa.lib.dto.request.UpdateLotRequest;
+import com.futurekawa.lib.dto.response.AlerteResponse;
+import com.futurekawa.lib.dto.response.EntrepotResponse;
+import com.futurekawa.lib.dto.response.ExploitationResponse;
+import com.futurekawa.lib.dto.response.LotResponse;
+import com.futurekawa.lib.dto.response.MesureStockageResponse;
+import com.futurekawa.lib.dto.response.PaysResponse;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.StatutLot;
+import com.futurekawa.lib.enums.TypeAlerte;
 
-/** Appels HTTP typés vers un unique backend local, un client par pays (voir CountryRegistry). */
 public interface LocalBackendClient {
 
-    Pays getPays();
+    PaysResponse getPays();
 
-    List<Exploitation> getExploitations();
+    List<ExploitationResponse> getExploitations();
 
-    List<Entrepot> getEntrepots(Long exploitationId);
+    List<EntrepotResponse> getEntrepots(Long exploitationId);
 
-    Entrepot getEntrepot(Long id);
+    EntrepotResponse getEntrepot(Long id);
 
-    PageDto<Lot> getLots(StatutLot statutLot, int page, int size);
+    PageDto<LotResponse> getLots(StatutLot statutLot, int page, int size);
 
-    Lot getLot(Long id);
+    LotResponse getLot(Long id);
 
-    Lot createLot(CreateLotRequest request);
+    LotResponse createLot(CreateLotRequest request);
 
-    Lot updateLot(Long id, UpdateLotRequest request);
+    LotResponse updateLot(Long id, UpdateLotRequest request);
 
-    PageDto<Alerte> getAlertes(StatutAlerte statutAlerte, TypeAlerte typeAlerte, int page, int size);
+    PageDto<AlerteResponse> getAlertes(StatutAlerte statutAlerte, TypeAlerte typeAlerte, int page, int size);
 
-    Alerte getAlerte(Long id);
+    AlerteResponse getAlerte(Long id);
 
-    Alerte updateAlerte(Long id, UpdateAlerteRequest request);
+    AlerteResponse updateAlerte(Long id, UpdateAlerteRequest request);
 
-    PageDto<MesureStockage> getMesures(Long entrepotId, LocalDateTime from, LocalDateTime to, int page, int size);
+    PageDto<MesureStockageResponse> getMesures(Long entrepotId, LocalDateTime from, LocalDateTime to,
+                                               int page, int size);
 
-    MesureStockage getLatestMesure(Long entrepotId);
+    MesureStockageResponse getLatestMesure(Long entrepotId);
 
-    /** Construit un LocalBackendClient lié à l'URL de base d'un backend local donné. */
     interface Factory {
         LocalBackendClient create(String baseUrl);
     }

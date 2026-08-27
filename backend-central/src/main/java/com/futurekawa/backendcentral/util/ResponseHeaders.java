@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
-/** Pose l'en-tête X-Unavailable-Countries quand des pays sont absents d'un fan-out (§5). */
 public final class ResponseHeaders {
 
     private static final String UNAVAILABLE_HEADER = "X-Unavailable-Countries";

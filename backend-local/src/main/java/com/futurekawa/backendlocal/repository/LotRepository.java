@@ -12,7 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.futurekawa.backendlocal.model.Lot;
-import com.futurekawa.backendlocal.model.enums.StatutLot;
+import com.futurekawa.lib.enums.StatutLot;
 
 @Repository
 public interface LotRepository extends JpaRepository<Lot, Long> {
@@ -29,9 +29,6 @@ public interface LotRepository extends JpaRepository<Lot, Long> {
     @EntityGraph(attributePaths = {"exploitation", "entrepot", "pays"})
     Page<Lot> findByEntrepotIdAndStatutLot(Long entrepotId, StatutLot statutLot, Pageable pageable);
 
-    /**
-     * Finds lots that entered storage before a certain date and are not yet marked as 'PERIME'.
-     */
     @EntityGraph(attributePaths = {"exploitation", "entrepot", "pays"})
     @Query("SELECT l FROM Lot l WHERE l.dateEntreeStockage < :thresholdDate AND l.statutLot != :perimeStatus")
     List<Lot> findLotsOlderThanAndStatutNot(

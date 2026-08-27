@@ -1,13 +1,24 @@
 # Backend Local — Implementation Plan
 
+> **Historical document.** This is the original build plan, kept for traceability. It has
+> been executed; where it disagrees with the code, the code wins. Current references:
+> `backend-local-architecture.md` for this module, `docs/ARCHITECTURE.md` for the system,
+> `docs/plan-de-tests.md` for the test strategy.
+>
+> Known departures from this plan: **no Keycloak anywhere** in the solution (see
+> `docs/ARCHITECTURE.md` §6); alert e-mails are composed and sent **by Odoo**, not through
+> `mail.message` calls from the backend; integration tests run on **H2 in PostgreSQL mode**,
+> not Testcontainers; there is no `infra/` directory (Docker assets live next to each
+> service); the shared DTOs and enums have moved to the **`futurekawa-lib`** module.
+
 ## 1. Vision
 
 A **single Spring Boot codebase** that serves as the local backend for any country.
 Country-specific configuration (name, thresholds, tolerances, alert recipients, etc.) is injected at runtime through a **`.env`** file consumed by Docker Compose.
 No per-country folder — one image, one compose file, three deployments.
 
-The local backend has **no app-level authentication**. It is a machine-to-machine service, called only by the central backend, and is secured at the network/service layer (private network / VPN / mTLS or a client-credentials token presented by the central backend). User authentication and RBAC live at the edge (frontend + central backend via Keycloak), not here. See §11 for the rationale.
-Alert emails are sent through **Odoo's `mail.message` API**, eliminating the need for a standalone SMTP server.
+The local backend has **no app-level authentication**. It is a machine-to-machine service, called only by the central backend, and is secured at the network/service layer (private network / VPN / mTLS or a client-credentials token presented by the central backend). User authentication and RBAC are out of scope for this phase; the central backend has no app-level authentication either. See §11 for the rationale.
+Alerts are pushed to Odoo as quality tickets over JSON-RPC; **Odoo** owns the e-mail notification, so there is no SMTP server in the application.
 
 ---
 

@@ -33,13 +33,6 @@ spring:
         default-page-size: 20
         max-page-size: 100
 
-  # ── Security: Keycloak OIDC JWT validation ───────────────────────────────
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/futurekawa}
-
 # ── Server ─────────────────────────────────────────────────────────────────────
 server:
   port: ${SERVER_PORT:8090}
@@ -53,7 +46,9 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: when-authorized
+      # No application-level authentication on the central, so `when-authorized`
+      # would never show anything.  See docs/ARCHITECTURE.md for the rationale.
+      show-details: always
 
 # ── Springdoc / Swagger UI ─────────────────────────────────────────────────────
 springdoc:
@@ -68,9 +63,9 @@ springdoc:
 # ══════════════════════════════════════════════════════════════════════════════
 
 futurekawa:
-  # ── Registre des backends locaux ─────────────────────────────────────────
-  # Un local par pays. codePays doit correspondre au codePays que le local
-  # renvoie lui-même sur GET /api/v1/pays (vérifié au démarrage).
+  # ── Backend-local registry ───────────────────────────────────────────────
+  # One local per country. `code-pays` must match the codePays the local itself
+  # returns on GET /api/v1/pays (checked at startup by the discovery scheduler).
   locals:
     - code-pays: BR
       url: ${LOCAL_BR_URL:http://localhost:8081}
@@ -79,16 +74,23 @@ futurekawa:
     - code-pays: CO
       url: ${LOCAL_CO_URL:http://localhost:8083}
 
-  # ── Découverte périodique des pays (nomPays, seuils) ─────────────────────
+  # ── Periodic country discovery (nomPays, thresholds) ─────────────────────
   discovery:
     fixed-delay-ms: ${DISCOVERY_FIXED_DELAY_MS:60000}
 
-  # ── Client HTTP vers les locaux ──────────────────────────────────────────
+  # ── HTTP client towards the locals ───────────────────────────────────────
   client:
     connect-timeout-ms: ${LOCAL_CONNECT_TIMEOUT_MS:2000}
     read-timeout-ms: ${LOCAL_READ_TIMEOUT_MS:5000}
 
-# ── Resilience4j: config par défaut, un CircuitBreaker par codePays créé à la volée ──
+  # ── CORS: allowed frontend origins ───────────────────────────────────────
+  # Only needed when the frontend calls the central directly (build served by
+  # nginx, or `vite preview`). Under `pnpm dev` the Vite proxy keeps both on the
+  # same origin, so CORS does not come into play.
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173}
+
+# ── Resilience4j: default config; one CircuitBreaker per codePays, created on demand ──
 resilience4j:
   circuitbreaker:
     configs:

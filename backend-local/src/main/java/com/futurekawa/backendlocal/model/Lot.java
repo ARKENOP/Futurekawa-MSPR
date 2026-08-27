@@ -17,7 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import com.futurekawa.backendlocal.model.enums.StatutLot;
+import com.futurekawa.lib.enums.StatutLot;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

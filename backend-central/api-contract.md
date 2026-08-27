@@ -2,10 +2,12 @@
 
 > Document de référence pour l'implémentation du **backend central**.
 > Il décrit **exactement** la forme JSON que le central doit exposer au `frontend-web`.
-> La source de vérité des champs est l'ensemble des `*Response` du `backend-local`
-> (`backend-local/src/main/java/com/futurekawa/backendlocal/dto/response/`).
-> Le miroir TypeScript correspondant vit dans `frontend-web/src/types/api.ts` — **ces deux
-> fichiers doivent rester synchronisés.**
+> La source de vérité des champs est le module partagé **`futurekawa-lib`**
+> (`futurekawa-lib/src/main/java/com/futurekawa/lib/dto/response/` et `.../enums/`),
+> dont dépendent **à la fois** `backend-local` et `backend-central` : les deux services
+> sérialisent donc littéralement les mêmes records, il n'y a plus de miroir Java à
+> resynchroniser. Le miroir TypeScript vit dans `frontend-web/src/types/api.ts` — **il
+> reste à maintenir en phase avec `futurekawa-lib`.**
 
 ---
 
@@ -14,7 +16,12 @@
 - **Agrège** les N backends locaux (un par pays : Brésil `BR`, Équateur `EC`, Colombie `CO`).
   Chaque local expose `GET {baseLocal}/api/v1/...` sans authentification applicative (service M2M).
 - **Regroupe par pays** les ressources et **réexpose** une API REST unique au frontend sous `/api/v1`.
-- **Sécurité** : valide le JWT **Keycloak** (OIDC) sur chaque requête entrante du frontend.
+- **Sécurité** : **aucune authentification applicative**. Le central est un service interne
+  du siège, déployé sur réseau privé ; l'authentification utilisateur est hors périmètre de
+  cette phase (décision du 2026-08-27, cohérente avec le choix déjà fait pour les backends
+  locaux). Le frontend n'envoie donc aucun jeton. Le seul réglage côté central est **CORS**
+  (`futurekawa.cors.allowed-origins`), utile quand le frontend est servi sur une autre
+  origine ; en dev, le proxy Vite met frontend et API sur la même origine.
 - **Résilience** : un **circuit breaker Resilience4j par backend local** ; un pays en panne
   ne doit jamais faire échouer toute la réponse (voir §5).
 
@@ -280,7 +287,13 @@ Rappel : `id` et `paysId` restent **locaux** ; l'unicité globale passe par `cod
 
 ---
 
-## 7. À faire à l'arrivée du vrai backend central
+## 7. Maintenance du contrat
 
-1. Générer son `openapi.yml` et le confronter à ce contrat + à `frontend-web/src/types/api.ts`.
-2. Ajuster les deux miroirs si l'enveloppe réelle diffère (un seul point de vérité à la fois).
+1. Un champ de ressource change → le modifier **une seule fois** dans `futurekawa-lib`,
+   puis répercuter dans `frontend-web/src/types/api.ts` et dans ce document.
+2. Les enveloppes de consolidation (`CountryGroup`, `CountryPageGroup`, `PageDto`) ne sont
+   produites que par le central : elles restent dans `backend-central` (règle : un type ne
+   monte dans `futurekawa-lib` que si **les deux** services Java l'utilisent).
+3. Les noms de schémas OpenAPI du central suivent les noms de classes partagées
+   (`LotResponse`, `AlerteResponse`, …). Le JSON, lui, est inchangé : seuls les libellés
+   de la documentation ont suivi le renommage.

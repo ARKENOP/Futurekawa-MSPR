@@ -6,19 +6,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/**
- * Corps de POST /api/v1/lots. codePays route la création vers le bon backend local
- * (§4.8 du contrat) et n'est pas transmis tel quel au local (déjà implicite là-bas).
- */
 public record CreateLotRequest(
         @NotBlank(message = "codePays is required")
         String codePays,
 
-        @NotBlank(message = "Reference lot is required")
+        @NotBlank(message = "referenceLot is required")
         @Size(max = 50)
         String referenceLot,
 
-        @NotNull(message = "Storage entry date is required")
+        @NotNull(message = "dateEntreeStockage is required")
         LocalDate dateEntreeStockage,
 
         LocalDate dateRecolte,
@@ -26,10 +22,15 @@ public record CreateLotRequest(
         @Size(max = 255)
         String qualiteLot,
 
-        @NotNull(message = "Exploitation ID is required")
+        @NotNull(message = "exploitationId is required")
         Long exploitationId,
 
-        @NotNull(message = "Entrepôt ID is required")
+        @NotNull(message = "entrepotId is required")
         Long entrepotId
 ) {
+    // codePays only routes the call; a backend-local serves one country and rejects it.
+    public com.futurekawa.lib.dto.request.CreateLotRequest toLocalRequest() {
+        return new com.futurekawa.lib.dto.request.CreateLotRequest(
+                referenceLot, dateEntreeStockage, dateRecolte, qualiteLot, exploitationId, entrepotId);
+    }
 }

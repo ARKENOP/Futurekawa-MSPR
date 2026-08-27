@@ -7,20 +7,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.futurekawa.backendlocal.dto.request.UpdateAlerteRequest;
-import com.futurekawa.backendlocal.dto.response.AlerteResponse;
+import com.futurekawa.backendlocal.config.PaysProperties;
 import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
 import com.futurekawa.backendlocal.mapper.AlerteMapper;
 import com.futurekawa.backendlocal.model.Alerte;
 import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.Lot;
 import com.futurekawa.backendlocal.model.MesureStockage;
-import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
-import com.futurekawa.backendlocal.model.enums.StatutAlerte;
-import com.futurekawa.backendlocal.model.enums.TypeAlerte;
-import com.futurekawa.backendlocal.config.PaysProperties;
 import com.futurekawa.backendlocal.odoo.OdooQualityAlertService;
 import com.futurekawa.backendlocal.repository.AlerteRepository;
+import com.futurekawa.lib.dto.request.UpdateAlerteRequest;
+import com.futurekawa.lib.dto.response.AlerteResponse;
+import com.futurekawa.lib.enums.NiveauAlerte;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.TypeAlerte;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +54,6 @@ public class AlerteService {
         alerte.setStatutAlerte(request.statutAlerte());
         Alerte saved = alerteRepository.save(alerte);
 
-        // Local backend is the source of truth: propagate the new status to Odoo.
         odooQualityAlertService.updateAlerteStatut(saved.getId(), saved.getStatutAlerte());
 
         return alerteMapper.toResponse(saved);
@@ -62,7 +61,6 @@ public class AlerteService {
 
     @Transactional
     public void createConditionAlerte(Entrepot entrepot, MesureStockage mesure, NiveauAlerte niveau, String description) {
-        // Dedup logic: check if an active alert already exists for this entrepot and type
         alerteRepository.findFirstByEntrepotIdAndTypeAlerteAndStatutAlerte(
                 entrepot.getId(), TypeAlerte.CONDITION_NON_IDEALE, StatutAlerte.OUVERTE
         ).ifPresentOrElse(
@@ -101,7 +99,7 @@ public class AlerteService {
         alerte.setEntrepot(entrepot);
         alerte.setLotConcerne(lot);
         alerte.setTypeAlerte(TypeAlerte.LOT_TROP_ANCIEN);
-        alerte.setNiveau(NiveauAlerte.CRITIQUE); // Expiry is always critical
+        alerte.setNiveau(NiveauAlerte.CRITIQUE);
         alerte.setStatutAlerte(StatutAlerte.OUVERTE);
         alerte.setDateHeureCreation(LocalDateTime.now());
         alerte.setMessageDescription(description);

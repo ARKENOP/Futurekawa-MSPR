@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.futurekawa.backendlocal.dto.request.CreateLotRequest;
-import com.futurekawa.backendlocal.dto.request.UpdateLotRequest;
-import com.futurekawa.backendlocal.dto.response.LotResponse;
 import com.futurekawa.backendlocal.service.LotService;
+import com.futurekawa.lib.dto.request.CreateLotRequest;
+import com.futurekawa.lib.dto.request.UpdateLotRequest;
+import com.futurekawa.lib.dto.response.LotResponse;
 
 import lombok.RequiredArgsConstructor;
 

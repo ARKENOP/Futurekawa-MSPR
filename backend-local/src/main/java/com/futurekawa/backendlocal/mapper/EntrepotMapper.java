@@ -3,12 +3,9 @@ package com.futurekawa.backendlocal.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import com.futurekawa.backendlocal.dto.response.EntrepotResponse;
 import com.futurekawa.backendlocal.model.Entrepot;
+import com.futurekawa.lib.dto.response.EntrepotResponse;
 
-/**
- * MapStruct mapper for Entrepot entities and DTOs.
- */
 @Mapper
 public interface EntrepotMapper {
 

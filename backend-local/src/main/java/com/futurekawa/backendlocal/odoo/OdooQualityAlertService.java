@@ -11,22 +11,13 @@ import java.util.Map;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
-import com.futurekawa.backendlocal.model.enums.StatutAlerte;
-import com.futurekawa.backendlocal.model.enums.TypeAlerte;
+import com.futurekawa.lib.enums.NiveauAlerte;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.TypeAlerte;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Pushes alerts into Odoo so they appear in the
- * <em>FutureKawa Quality &rarr; Alertes</em> screen.
- *
- * <p>Creates a record in the custom {@code futurekawa.quality.alert} model
- * (provided by the {@code futurekawa_quality} Odoo addon) via the external
- * JSON-RPC API. Runs asynchronously so a slow or unreachable Odoo never blocks
- * the MQTT ingestion / alert-creation transaction.</p>
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -68,11 +59,6 @@ public class OdooQualityAlertService {
         }
     }
 
-    /**
-     * Propagates a status change to the matching Odoo ticket (one-way:
-     * local backend is the source of truth). The ticket is located by its
-     * {@code backend_alerte_id}. Runs asynchronously; failures are logged only.
-     */
     @Async
     public void updateAlerteStatut(Long backendAlerteId, StatutAlerte statut) {
         try {
@@ -100,7 +86,6 @@ public class OdooQualityAlertService {
         }
     }
 
-    /** Maps the local {@link StatutAlerte} to the Odoo ticket {@code state}. */
     private String toOdooState(StatutAlerte statut) {
         return switch (statut) {
             case OUVERTE -> "draft";
@@ -109,7 +94,6 @@ public class OdooQualityAlertService {
         };
     }
 
-    /** Odoo stores datetimes as naive UTC strings ("yyyy-MM-dd HH:mm:ss"). */
     private String toOdooDatetime(LocalDateTime localDateTime) {
         return localDateTime.atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneOffset.UTC)

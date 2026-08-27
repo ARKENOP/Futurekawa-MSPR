@@ -1,6 +1,14 @@
 # Migration Plan — Move Alerting/Odoo Logic to Backend-Central
 
-**Status:** Not started. This document is the roadmap to implement later.
+**Status:** Not started (re-checked 27/08/2026). This document is the roadmap to implement
+later; the working `local → Odoo` path described in §8 is still what runs today.
+
+**Two things changed since this plan was written**, without invalidating it:
+- `backend-central` now exists and is wired to the frontend, but it has **no Odoo
+  integration** — steps 1 and 2 of §7 are still entirely to do.
+- Keycloak was dropped from the solution: the "Keycloak later for the user-facing
+  `frontend → central`" note in §4 no longer applies. The `X-Internal-Token` shared secret
+  proposed for the internal hops remains the plan.
 
 **Goal:** Make `backend-central` the **single integration hub** between the country
 `backend-local` instances and Odoo ("Model A" / hub-and-spoke). Central becomes the
@@ -84,7 +92,8 @@ addresses.
 - #1 / #2 just delegate to the moved `OdooQualityAlertService` (create / update).
 - #3 maps `odooState → StatutAlerte`, resolves the backend via the registry, calls #4.
 - **Auth:** shared secret header `X-Internal-Token` on the local→central and
-  Odoo→central hops for now. Keycloak later for the user-facing `frontend → central`.
+  Odoo→central hops. The user-facing `frontend → central` hop has no application-level
+  authentication (see `docs/ARCHITECTURE.md` §6).
 
 ### Status mapping
 

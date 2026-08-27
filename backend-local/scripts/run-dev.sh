@@ -22,6 +22,12 @@ echo "Starting backend-local for COUNTRY_CODE=${COUNTRY_CODE} ..."
 echo "  MQTT : ${MQTT_BROKER_URL}"
 echo "  DB   : jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
 
+# backend-local is a module of the futurekawa-parent reactor and depends on
+# futurekawa-lib, so the library has to be resolvable before the module runs on
+# its own. Installing it is near-instant (a handful of records and enums).
+REPO_ROOT="$(dirname "$ROOT_DIR")"
+mvn -B -q -f "$REPO_ROOT/pom.xml" -pl futurekawa-lib install
+
 cd "$ROOT_DIR"
-# Beta: skip the (Spring Boot 4-incompatible) test compilation for now.
+# Tests are skipped here for startup speed; run them with `mvn verify` at the root.
 mvn -Dmaven.test.skip=true spring-boot:run

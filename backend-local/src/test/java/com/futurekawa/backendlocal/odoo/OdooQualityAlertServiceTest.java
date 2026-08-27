@@ -22,9 +22,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
-import com.futurekawa.backendlocal.model.enums.StatutAlerte;
-import com.futurekawa.backendlocal.model.enums.TypeAlerte;
+import com.futurekawa.lib.enums.NiveauAlerte;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.TypeAlerte;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -43,7 +43,7 @@ class OdooQualityAlertServiceTest {
     private Map<String, Object> capturedCreateVals() {
         ArgumentCaptor<List<Object>> args = ArgumentCaptor.forClass(List.class);
         verify(odooRpcClient).executeKw(eq("futurekawa.quality.alert"), eq("create"), args.capture(), anyMap());
-        // args = List.of( List.of(vals) )
+
         List<Object> outer = (List<Object>) args.getValue().get(0);
         return (Map<String, Object>) outer.get(0);
     }
@@ -78,7 +78,6 @@ class OdooQualityAlertServiceTest {
         when(odooRpcClient.executeKw(any(), any(), anyList(), anyMap()))
                 .thenThrow(new RuntimeException("Odoo down"));
 
-        // Must not propagate.
         service.pushAlerte(1L, "E", "BR", TypeAlerte.LOT_TROP_ANCIEN,
                 NiveauAlerte.INFO, null, "msg", LocalDateTime.now());
     }

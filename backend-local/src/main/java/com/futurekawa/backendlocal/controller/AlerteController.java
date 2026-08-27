@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.futurekawa.backendlocal.dto.request.UpdateAlerteRequest;
-import com.futurekawa.backendlocal.dto.response.AlerteResponse;
 import com.futurekawa.backendlocal.service.AlerteService;
+import com.futurekawa.lib.dto.request.UpdateAlerteRequest;
+import com.futurekawa.lib.dto.response.AlerteResponse;
 
 import lombok.RequiredArgsConstructor;
 
