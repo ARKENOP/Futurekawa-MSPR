@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 import com.futurekawa.backendcentral.circuitbreaker.CountryCircuitBreakers;
 import com.futurekawa.backendcentral.client.LocalBackendClient;
@@ -59,6 +60,12 @@ public class CountryFanoutExecutor {
         try {
             T data = circuitBreaker.executeSupplier(() -> call.apply(client));
             return Optional.of(new CountrySuccess<>(codePays, descriptor.nomPays(), data));
+        } catch (HttpClientErrorException e) {
+            // The country answered, it just rejected this request. Reporting it as
+            // "unavailable" would hide a healthy backend, so log loudly and move on.
+            log.warn("Backend local for {} rejected the request ({}); country reported empty",
+                    codePays, e.getStatusCode());
+            return Optional.empty();
         } catch (Exception e) {
             log.warn("Backend local unavailable for {}: {}", codePays, e.getMessage());
             return Optional.empty();

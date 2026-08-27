@@ -5,6 +5,7 @@ import java.net.URI;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -29,6 +30,19 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Not Found");
         problemDetail.setType(URI.create("https://api.futurekawa.com/errors/unknown-country"));
         problemDetail.setProperty("codePays", ex.getCodePays());
+        return problemDetail;
+    }
+
+    // A 4xx raised by a backend-local is relayed with its own status, so the frontend
+    // sees the 404 the country actually returned rather than a misleading 503.
+    @ExceptionHandler(HttpClientErrorException.class)
+    public ProblemDetail handleLocalClientError(HttpClientErrorException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                status != null ? status : HttpStatus.BAD_REQUEST,
+                "The country backend rejected the request: " + ex.getStatusText());
+        problemDetail.setTitle(status != null ? status.getReasonPhrase() : "Bad Request");
+        problemDetail.setType(URI.create("https://api.futurekawa.com/errors/local-backend-rejected"));
         return problemDetail;
     }
 

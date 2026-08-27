@@ -64,15 +64,14 @@ springdoc:
 
 futurekawa:
   # ── Backend-local registry ───────────────────────────────────────────────
-  # One local per country. `code-pays` must match the codePays the local itself
-  # returns on GET /api/v1/pays (checked at startup by the discovery scheduler).
-  locals:
-    - code-pays: BR
-      url: ${LOCAL_BR_URL:http://localhost:8081}
-    - code-pays: EC
-      url: ${LOCAL_EC_URL:http://localhost:8082}
-    - code-pays: CO
-      url: ${LOCAL_CO_URL:http://localhost:8083}
+  # `CODE=url` pairs, one per deployed country — the list is open-ended, since each
+  # backend-local declares its own COUNTRY_CODE in its .env. Set it entirely from the
+  # environment:
+  #   FUTUREKAWA_LOCALS=BR=http://backend-local-br:8081,EC=http://backend-local-ec:8081
+  # The code must match the codePays that backend returns on GET /api/v1/pays; the
+  # discovery scheduler logs an error on mismatch. The default below is a single local
+  # country for development.
+  locals: ${FUTUREKAWA_LOCALS:BR=http://localhost:8081}
 
   # ── Periodic country discovery (nomPays, thresholds) ─────────────────────
   discovery:
@@ -95,6 +94,9 @@ resilience4j:
   circuitbreaker:
     configs:
       default:
+        # A 4xx is the country answering, not failing: it must not open the circuit.
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
         sliding-window-size: 10
         minimum-number-of-calls: 5
         failure-rate-threshold: 50

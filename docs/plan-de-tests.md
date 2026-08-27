@@ -34,6 +34,10 @@ backend pays (Java/IoT) jusqu'à l'interface web.
   `EntrepotExploitationApiIntegrationTest`, `PaysApiIntegrationTest`,
   `LotRepositoryIntegrationTest`, `OpenApiExportTest` (qui régénère
   `backend-local/api/openapi.yml`).
+- Couvrent notamment les règles du contrat corrigées le 27/08/2026 : conservation de la
+  date d'entrée en stockage soumise, calcul de `ancienneteJours`, tri FIFO par défaut,
+  filtres `statutLot` / `statutAlerte` / `typeAlerte`, fenêtre `from`/`to` des mesures et
+  horodatage de clôture d'alerte.
 - Le broker MQTT n'est pas requis : `MqttConfig` est désactivé dans le profil de test
   (`futurekawa.mqtt.enabled=false`), l'ingestion étant couverte au niveau unitaire par
   `MqttMessageHandlerTest`.
@@ -45,7 +49,7 @@ backend pays (Java/IoT) jusqu'à l'interface web.
   (donc `mvn test` reste vert, seul `mvn verify` bloque). Sont exclus la classe de
   démarrage, le câblage de configuration (`MqttConfig`, `RestClientConfig`, `OpenApiConfig`)
   et les records `*Properties`.
-- **Résultat courant** : 68 tests, 0 échec, ~83 % de lignes couvertes.
+- **Résultat courant** : 74 tests, 0 échec, ~83 % de lignes couvertes.
 - **Lacunes connues** : `OdooRpcClient` (appels JSON-RPC HTTP) et les `equals`/`hashCode`
   des entités sont peu couverts.
 
@@ -116,6 +120,9 @@ pull request :
    mapping `CreateLotRequest` → contrat local.
 3. **Aucun test unitaire de composant frontend** : pas de Vitest ni de Vue Test Utils, seuls
    le lint, le typecheck et le build sont contrôlés.
-4. **Le tri FIFO et les filtres serveur ne sont pas testés** parce qu'ils ne sont pas
-   implémentés côté backend pays (voir `docs/ARCHITECTURE.md` §7) ; le filtrage est
-   actuellement réalisé côté frontend.
+4. **Le frontend n'exploite pas encore les filtres serveur** : il charge `size=100` par pays
+   puis filtre en mémoire. Les filtres et le tri FIFO fonctionnent et sont testés côté
+   backend, mais au-delà de 100 lots par pays l'affichage porte sur un sous-ensemble.
+5. **Le retour Odoo → backend n'est pas couvert par un test automatisé** : il a été validé
+   manuellement (appel `PATCH` identique à celui du module, alerte clôturée, détection
+   réarmée). Un test Odoo (`odoo -i futurekawa_quality --test-enable`) reste à écrire.

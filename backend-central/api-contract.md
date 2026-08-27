@@ -13,7 +13,11 @@
 
 ## 1. Rôle du backend central
 
-- **Agrège** les N backends locaux (un par pays : Brésil `BR`, Équateur `EC`, Colombie `CO`).
+- **Agrège** les N backends locaux, **un par pays déployé**. Le nombre de pays n'est pas
+  une propriété du code : chaque `backend-local` déclare son identité (`COUNTRY_CODE`,
+  `COUNTRY_NAME`, seuils) dans son propre `.env`, et le central reçoit la liste
+  `CODE=url` par configuration (`FUTUREKAWA_LOCALS`). Les exemples ci-dessous utilisent
+  `BR` / `EC` / `CO`, mais aucun code n'est câblé nulle part.
   Chaque local expose `GET {baseLocal}/api/v1/...` sans authentification applicative (service M2M).
 - **Regroupe par pays** les ressources et **réexpose** une API REST unique au frontend sous `/api/v1`.
 - **Sécurité** : **aucune authentification applicative**. Le central est un service interne
@@ -67,7 +71,8 @@ Ces règles garantissent que `frontend-web/src/types/api.ts` reste valide.
 
 ## 4. Contrat de sortie endpoint par endpoint
 
-Toutes les routes sont préfixées par `/api/v1`. Les `{codePays}` valent `BR` / `EC` / `CO`.
+Toutes les routes sont préfixées par `/api/v1`. `{codePays}` est le code déclaré par le
+backend du pays (`COUNTRY_CODE`), quel qu'il soit ; les exemples utilisent `BR`.
 
 ### 4.1 `GET /pays` → `Pays[]`
 

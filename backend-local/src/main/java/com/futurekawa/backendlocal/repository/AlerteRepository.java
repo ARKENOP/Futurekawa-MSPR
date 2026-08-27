@@ -25,6 +25,9 @@ public interface AlerteRepository extends JpaRepository<Alerte, Long> {
     Page<Alerte> findByTypeAlerte(TypeAlerte typeAlerte, Pageable pageable);
 
     @EntityGraph(attributePaths = {"entrepot", "lotConcerne"})
+    Page<Alerte> findByStatutAlerteAndTypeAlerte(StatutAlerte statutAlerte, TypeAlerte typeAlerte, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"entrepot", "lotConcerne"})
     Page<Alerte> findByEntrepotId(Long entrepotId, Pageable pageable);
 
     Optional<Alerte> findFirstByEntrepotIdAndTypeAlerteAndStatutAlerte(

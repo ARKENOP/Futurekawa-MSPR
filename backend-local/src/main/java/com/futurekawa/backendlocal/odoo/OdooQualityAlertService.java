@@ -30,7 +30,7 @@ public class OdooQualityAlertService {
     private final OdooRpcClient odooRpcClient;
 
     @Async
-    public void pushAlerte(Long backendAlerteId, String entrepotNom, String paysCode,
+    public void pushAlerte(Long backendAlerteId, String entrepotNom, String paysCode, String paysNom,
                            TypeAlerte typeAlerte, NiveauAlerte niveau,
                            String lotReference, String description, LocalDateTime dateCreation) {
         try {
@@ -43,6 +43,9 @@ public class OdooQualityAlertService {
             vals.put("date_creation", toOdooDatetime(dateCreation));
             if (paysCode != null) {
                 vals.put("pays_code", paysCode);
+                // Lets Odoo name a country it is seeing for the first time. Not a field on
+                // the ticket: the module reads it, then drops it.
+                vals.put("pays_nom", paysNom);
             }
             if (lotReference != null) {
                 vals.put("lot_reference", lotReference);

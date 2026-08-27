@@ -16,7 +16,7 @@ public class CountryRegistry {
     private final Map<String, LocalBackendClient> clients = new ConcurrentHashMap<>();
 
     public CountryRegistry(LocalBackendProperties properties, LocalBackendClient.Factory clientFactory) {
-        for (LocalBackendProperties.Entry entry : properties.locals()) {
+        for (LocalBackendProperties.Entry entry : properties.entries()) {
             descriptors.put(entry.codePays(), new LocalBackendDescriptor(entry.codePays(), entry.url()));
             clients.put(entry.codePays(), clientFactory.create(entry.url()));
         }

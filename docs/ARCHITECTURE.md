@@ -20,7 +20,7 @@ graph TB
     %% ════════════════════════════════════════════════════
     %% PAYS 1 — BRÉSIL (modèle répliqué pour EC et CO)
     %% ════════════════════════════════════════════════════
-    subgraph Pays1 ["🌍 Pays 1 : Brésil (BR)"]
+    subgraph Pays1 ["🌍 Pays 1 : Brésil (BR) — modèle répliqué à l'identique"]
         direction TB
         Capteur1["🌡️ DHT22<br>température + humidité"]:::hardware
         Uno1["📟 Arduino Uno<br>firmware, JSON sur port série"]:::hardware
@@ -123,7 +123,9 @@ graph TB
 2. **Détection** : à chaque mesure, `MesureService` compare la valeur aux seuils du pays (`PaysProperties`, injectés par `.env`). Hors tolérance → `AlerteService` ouvre une alerte `CONDITION_NON_IDEALE` (avec déduplication : pas de seconde alerte ouverte pour le même entrepôt). Un `@Scheduled` horaire lève les alertes `LOT_TROP_ANCIEN` au-delà de 365 jours de stockage.
 3. **Notification** : `backend-local` pousse la fiche dans Odoo en JSON-RPC. Odoo est responsable de l'e-mail : le `mail.template` n'est déclenché que pour les alertes de niveau `CRITIQUE`, et les destinataires sont résolus dynamiquement par le tag de contact « Responsable Qualite FutureKawa » (aucune adresse en dur dans le code).
 4. **Consolidation** : le frontend n'interroge que `backend-central`, qui fait un **fan-out parallèle** vers les backends pays et enveloppe chaque réponse dans son groupe pays.
-5. **Écritures** : création de lot et changement de statut passent par le central, qui relaie vers le bon pays selon `codePays`. Le backend local reste la source de vérité du cycle de vie des alertes ; la clôture d'une alerte est répercutée dans Odoo (sens local → Odoo uniquement).
+5. **Écritures** : création de lot et changement de statut passent par le central, qui relaie vers le bon pays selon `codePays`. Le backend local reste **la source de vérité du cycle de vie des alertes**.
+6. **Traitement qualité (bidirectionnel)** : les décisions de l'équipe qualité dans Odoo (*Démarrer l'analyse*, *Valider / Résoudre*, *Déclasser le lot*) sont repoussées vers le backend du pays propriétaire de l'alerte — `PATCH {backend}/api/v1/alertes/{backend_alerte_id}` — l'URL étant lue sur la fiche du pays dans Odoo (*Configuration → Pays*), créée
+automatiquement — nom compris — à la première alerte reçue de ce pays. Le backend enregistre le nouveau statut puis le réécrit dans Odoo : cette écriture finale est idempotente, la boucle s'arrête. Sans ce retour, une fiche résolue uniquement dans l'ERP laissait l'alerte `OUVERTE` côté backend, dont la déduplication **supprimait alors toute nouvelle alerte** pour cet entrepôt.
 
 ## 4. Choix d'architecture argumentés
 
@@ -143,7 +145,7 @@ graph TB
 
 ### Pérennité
 
-- **Un seul code source pour N pays** : la configuration pays (seuils, tolérances, identité, connexions) est entièrement externalisée en `.env`. Ouvrir un quatrième pays = un fichier d'environnement et une entrée dans le registre du central, pas une ligne de code.
+- **Un seul code source pour N pays** : la configuration pays (seuils, tolérances, identité, connexions) est entièrement externalisée en `.env`. Ouvrir un pays supplémentaire = déployer une stack pays avec son `.env`, ajouter une paire `CODE=url` dans `FUTUREKAWA_LOCALS` côté siège, et renseigner son URL dans Odoo (*Configuration → Pays*, créé automatiquement à la première alerte). **Aucun code pays n'est écrit dans le code** : ni dans les backends, ni dans le module Odoo, ni dans le frontend, qui découvre la liste via `GET /api/v1/pays`.
 - **Contrat d'API partagé** (`futurekawa-lib`) : les DTO et enums échangés existent en **un seul exemplaire** compilé, consommé par les deux services. Une divergence de champ devient une erreur de compilation au lieu d'un bug d'intégration.
 - **Vocabulaire métier unique** : noms d'entités, de champs, valeurs d'enums et routes suivent `GLOSSAIRE.md`. Convention de langue : **français pour le domaine, anglais pour le code** (commentaires, messages techniques).
 - **Découverte des pays** : le central interroge périodiquement `GET /api/v1/pays` de chaque backend pour récupérer nom et seuils — l'ajout d'un pays ne demande pas de redéploiement du frontend.
@@ -191,10 +193,10 @@ Conséquence sur les images Docker : les `Dockerfile.prod` se construisent depui
 | Sujet | État |
 | --- | --- |
 | Authentification utilisateur / RBAC | Non implémentée (voir §6). Chantier phase 2. |
-| Alerting via le central (`local → central → Odoo`) | Non fait. Aujourd'hui chaque pays parle directement à Odoo. Plan détaillé : `backend-local/migration-alerting-to-backend-central-plan.md`. |
-| Retour Odoo → backend (boutons Valider / Analyser / Déclasser) | Non fait. La synchronisation d'état est à sens unique (local → Odoo). |
+| Alerting via le central (`local → central → Odoo`) | Non fait, et non nécessaire au fonctionnement : les deux sens passent directement entre le pays et Odoo. Plan détaillé si l'on veut centraliser : `backend-local/migration-alerting-to-backend-central-plan.md`. Le module Odoo adressant le backend par `pays_code` via `ir.config_parameter`, la bascule ne demanderait aucune modification de son code. |
+| Odoo `rejected` (« lot déclassé ») | Mappé sur `CLOTUREE`, le backend n'ayant que trois statuts. La nuance « déclassé » reste dans l'état et le journal d'audit de la fiche Odoo ; le `statutLot` du lot n'est pas modifié automatiquement. |
 | Module Odoo `futurekawa_inventory` (moteur FIFO) | Non implémenté. Spécifié dans `odoo/implementation_plan.md`. |
 | Tests de `backend-central` | Aucun. Le plugin JaCoCo est en place mais sans barrière, faute de tests. |
-| Filtres et tri côté backend pays | `statutLot`, `statutAlerte`, `typeAlerte`, `from`/`to` sont transmis par le central mais ignorés par le local ; le tri FIFO n'est pas appliqué par défaut sur les endpoints de liste. Le filtrage est fait côté frontend. |
 | Multi-pays simultané sur un même hôte | `docker-compose.prod.yml` fixe les noms de conteneurs et les ports : lancer BR, EC et CO sur la même machine demande de paramétrer projet et ports. |
+| Filtrage et pagination côté frontend | Les filtres serveur existent et fonctionnent, mais les vues chargent encore `size=100` par pays puis filtrent en mémoire : au-delà de 100 lots par pays, l'affichage travaille sur un sous-ensemble. |
 | Bus d'événements inter-sites (MQTT bridge) | Documenté comme cible de production, non construit. |

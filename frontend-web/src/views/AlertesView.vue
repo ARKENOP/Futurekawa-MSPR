@@ -8,6 +8,8 @@ import type { Alerte, StatutAlerte, TypeAlerte } from '@/types/api';
 import AlertFeed from '@/components/alerts/AlertFeed.vue';
 import PaginationBar from '@/components/common/PaginationBar.vue';
 import LoadingState from '@/components/common/LoadingState.vue';
+import ErrorBanner from '@/components/common/ErrorBanner.vue';
+import { messageErreur } from '@/lib/errors';
 
 const country = useCountryStore();
 const { selected } = storeToRefs(country);
@@ -17,6 +19,7 @@ const all = ref<WithCountry<Alerte>[]>([]);
 const statutFilter = ref<StatutAlerte | ''>('');
 const typeFilter = ref<TypeAlerte | ''>('');
 const page = ref(0);
+const erreur = ref('');
 const size = 8;
 
 const statuts: StatutAlerte[] = ['OUVERTE', 'NOTIFIEE', 'CLOTUREE'];
@@ -24,12 +27,18 @@ const types: TypeAlerte[] = ['CONDITION_NON_IDEALE', 'LOT_TROP_ANCIEN'];
 
 async function load(): Promise<void> {
   loading.value = true;
-  if (!country.loaded) await country.load();
-  const groups = await listAlertes({ size: 100 });
-  all.value = flattenPageGroups(groups).sort((a, b) =>
-    b.dateHeureCreation.localeCompare(a.dateHeureCreation),
-  );
-  loading.value = false;
+  erreur.value = '';
+  try {
+    if (!country.loaded) await country.load();
+    const groups = await listAlertes({ size: 100 });
+    all.value = flattenPageGroups(groups).sort((a, b) =>
+      b.dateHeureCreation.localeCompare(a.dateHeureCreation),
+    );
+  } catch (e) {
+    erreur.value = messageErreur(e);
+  } finally {
+    loading.value = false;
+  }
 }
 
 const filtered = computed(() =>
@@ -46,13 +55,19 @@ watch(selected, load);
 onMounted(load);
 
 async function onClose(a: WithCountry<Alerte>): Promise<void> {
-  const updated = await closeAlerte(a.codePays, a.id);
-  a.statutAlerte = updated.statutAlerte;
-  a.dateHeureCloture = updated.dateHeureCloture;
+  erreur.value = '';
+  try {
+    const updated = await closeAlerte(a.codePays, a.id);
+    a.statutAlerte = updated.statutAlerte;
+    a.dateHeureCloture = updated.dateHeureCloture;
+  } catch (e) {
+    erreur.value = `Clôture impossible : ${messageErreur(e)}`;
+  }
 }
 </script>
 
 <template>
+  <ErrorBanner v-if="erreur" :message="erreur" @retry="load" />
   <div class="toolbar">
     <div class="filters">
       <label class="eyebrow">Statut</label>

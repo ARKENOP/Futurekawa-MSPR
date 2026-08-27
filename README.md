@@ -160,6 +160,27 @@ pip install -r requirements.txt
 python test_ui.py         # nécessite chromedriver et le frontend démarré
 ```
 
+## Ajouter un pays
+
+Le nombre de pays n'est pas inscrit dans le code. Pour en ajouter un :
+
+1. **Déployer sa stack pays** : copier `backend-local/.env.prod.example` en `.env`, y mettre
+   son `COUNTRY_CODE`, son `COUNTRY_NAME`, ses seuils et tolérances, puis
+   `docker compose -f docker-compose.prod.yml up -d --build`.
+2. **Le déclarer au siège** : ajouter une paire `CODE=url` à `FUTUREKAWA_LOCALS` dans
+   `backend-central/.env`, puis redémarrer le central. La liste est ouverte :
+   `FUTUREKAWA_LOCALS=BR=http://backend-local-br:8081,PE=http://backend-local-pe:8081`.
+   Le central vérifie au démarrage que le backend renvoie bien le code annoncé.
+3. **Renseigner son URL dans Odoo** : le pays s'inscrit tout seul dans
+   *FutureKawa Quality → Configuration → Pays* dès sa première alerte, avec son nom (le
+   backend l'envoie avec le code). Il reste à saisir l'URL de son backend pour que les
+   décisions qualité (analyse, validation, déclassement) lui soient répercutées ; les pays
+   sans URL sont signalés dans la liste. Vous pouvez aussi créer le pays à l'avance et
+   renseigner son URL avant sa première alerte.
+
+Le frontend n'a rien à changer : il découvre les pays et leurs seuils via
+`GET /api/v1/pays`.
+
 ## État du projet
 
 Ce qui fonctionne de bout en bout : acquisition capteur → MQTT → persistance → détection

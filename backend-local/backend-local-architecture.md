@@ -70,20 +70,18 @@ stack ships as `docker-compose.prod.yml` (PostgreSQL + Mosquitto + backend), the
 
 What is left in this module:
 
-- **`createLot` discards the submitted date**: `LotService` overwrites
-  `request.dateEntreeStockage()` with `LocalDateTime.now()`, so a backdated lot cannot be
-  created — which blocks the FIFO and peremption demos. The entity also stores a
-  `LocalDateTime` where the DTO carries a `LocalDate`.
-- **List endpoints ignore their filters**: `backend-central` forwards `statutLot`,
-  `statutAlerte`, `typeAlerte` and `from`/`to`, but the controllers only accept `Pageable`.
-  The repository methods already exist (`findByStatutLot`, `findByStatutAlerte`,
-  `findByTypeAlerte`, `findByEntrepotIdAndDateHeureMesureBetween...`) — they are simply not
-  wired up.
-- **No default FIFO ordering**: `listAll` calls `findAll(pageable)` with no default sort, so
-  row order is whatever PostgreSQL returns. The contract promises
-  `dateEntreeStockage ASC` for lots and `dateHeureCreation DESC` for alerts.
-- **`Alerte.dateHeureCloture` is missing from the entity** although the column exists, so
-  `AlerteResponse.dateHeureCloture` is mapped with `ignore = true`.
 - **Untested areas**: `OdooRpcClient` (JSON-RPC over HTTP) and entity `equals`/`hashCode`.
 - **Alerting relocation**: moving the Odoo integration behind `backend-central` is specified
-  in `migration-alerting-to-backend-central-plan.md` and not started.
+  in `migration-alerting-to-backend-central-plan.md` and not started. It is optional: both
+  directions of the Odoo exchange work today between the country backend and Odoo.
+
+Fixed on 27/08/2026 (kept here as a changelog):
+
+- `createLot` now stores the submitted `dateEntreeStockage` instead of `now()`, and
+  `ancienneteJours` is derived from it by `LotMapper` (it used to be `null` in every response).
+- The list endpoints honour `statutLot`, `statutAlerte`, `typeAlerte` and the `from`/`to`
+  measure window that `backend-central` had always been forwarding, and they apply a default
+  sort — FIFO (`dateEntreeStockage ASC`) for lots, newest-first for alerts.
+- `closeAlerte` stamps `dateCloture`, so `dateHeureCloture` is no longer always `null`.
+- Odoo pushes the quality team's decisions back through `PATCH /api/v1/alertes/{id}`, which
+  re-arms alert deduplication (a ticket treated only in the ERP used to mute the entrepot).

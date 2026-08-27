@@ -6,15 +6,16 @@ import { useCountryStore } from '@/stores/country';
 import { listEntrepots } from '@/api/entrepots';
 import { listLots } from '@/api/lots';
 import { listAlertes } from '@/api/alertes';
-import { latestMesure } from '@/api/mesures';
+import { listMesures, latestMesureOrNull } from '@/api/mesures';
 import { flattenGroups, flattenPageGroups, type WithCountry } from '@/lib/groups';
+import { messageErreur } from '@/lib/errors';
 import type { Entrepot, Lot, Alerte, MesureStockage, Pays } from '@/types/api';
 import KpiCard from '@/components/common/KpiCard.vue';
 import RoastGauge from '@/components/charts/RoastGauge.vue';
 import ConditionTimeSeries from '@/components/charts/ConditionTimeSeries.vue';
 import AlertFeed from '@/components/alerts/AlertFeed.vue';
 import LoadingState from '@/components/common/LoadingState.vue';
-import { listMesures } from '@/api/mesures';
+import ErrorBanner from '@/components/common/ErrorBanner.vue';
 
 const country = useCountryStore();
 const { selected, pays } = storeToRefs(country);
@@ -24,7 +25,8 @@ const loading = ref(true);
 const entrepots = ref<WithCountry<Entrepot>[]>([]);
 const lots = ref<WithCountry<Lot>[]>([]);
 const alertes = ref<WithCountry<Alerte>[]>([]);
-const latest = ref<Record<string, MesureStockage>>({});
+const latest = ref<Record<string, MesureStockage | null>>({});
+const erreur = ref('');
 const focusSeries = ref<MesureStockage[]>([]);
 const focusPays = ref<Pays | null>(null);
 const focusLabel = ref('');
@@ -39,6 +41,17 @@ function inScope(code: string): boolean {
 
 async function load(): Promise<void> {
   loading.value = true;
+  erreur.value = '';
+  try {
+    await chargerDonnees();
+  } catch (e) {
+    erreur.value = messageErreur(e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function chargerDonnees(): Promise<void> {
   if (!country.loaded) await country.load();
 
   const [entG, lotG, alG] = await Promise.all([
@@ -52,7 +65,7 @@ async function load(): Promise<void> {
 
   const entries = await Promise.all(
     entrepots.value.map(async (e) => {
-      const m = await latestMesure(e.codePays, e.id);
+      const m = await latestMesureOrNull(e.codePays, e.id);
       return [`${e.codePays}-${e.id}`, m] as const;
     }),
   );
@@ -69,8 +82,6 @@ async function load(): Promise<void> {
     focusSeries.value = [];
     focusPays.value = null;
   }
-
-  loading.value = false;
 }
 
 const openAlertes = computed(() =>
@@ -95,6 +106,7 @@ watch(selected, load);
 </script>
 
 <template>
+  <ErrorBanner v-if="erreur" :message="erreur" @retry="load" />
   <LoadingState v-if="loading" />
   <template v-else>
     <section class="kpis">
@@ -129,11 +141,12 @@ watch(selected, load);
             <RoastGauge
               v-if="latest[`${e.codePays}-${e.id}`] && paysOf(e.codePays)"
               label="Température"
-              :valeur="latest[`${e.codePays}-${e.id}`].temperatureC"
+              :valeur="latest[`${e.codePays}-${e.id}`]!.temperatureC"
               :ideale="paysOf(e.codePays)!.temperatureIdealeC"
               :tolerance="paysOf(e.codePays)!.toleranceTemperatureC"
               unite="°C"
             />
+            <p v-else class="no-mesure">Aucune mesure reçue pour cet entrepôt.</p>
           </div>
         </div>
 
@@ -152,6 +165,11 @@ watch(selected, load);
 </template>
 
 <style scoped>
+.no-mesure {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
 .kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
