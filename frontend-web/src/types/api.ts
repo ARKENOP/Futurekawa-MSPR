@@ -29,7 +29,7 @@ export interface Page<T> {
 
 /** Groupe une liste simple (non paginée) par pays d'origine. */
 export interface CountryGroup<T> {
-  codePays: string; // "BR", "EC", "CO"
+  codePays: string; // code déclaré par le backend du pays, ex. "BR"
   nomPays: string; // "Brésil", "Équateur", "Colombie"
   data: T[];
 }

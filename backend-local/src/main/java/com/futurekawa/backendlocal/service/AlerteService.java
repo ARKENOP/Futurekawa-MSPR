@@ -3,7 +3,9 @@ package com.futurekawa.backendlocal.service;
 import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +38,23 @@ public class AlerteService {
     private final OdooQualityAlertService odooQualityAlertService;
     private final PaysProperties paysProperties;
 
-    public Page<AlerteResponse> listAll(Pageable pageable) {
-        return alerteRepository.findAll(pageable).map(alerteMapper::toResponse);
+    public Page<AlerteResponse> listAll(StatutAlerte statutAlerte, TypeAlerte typeAlerte, Pageable pageable) {
+        Pageable effective = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                        Sort.by(Sort.Direction.DESC, "dateHeureCreation"));
+
+        Page<Alerte> alertes;
+        if (statutAlerte != null && typeAlerte != null) {
+            alertes = alerteRepository.findByStatutAlerteAndTypeAlerte(statutAlerte, typeAlerte, effective);
+        } else if (statutAlerte != null) {
+            alertes = alerteRepository.findByStatutAlerte(statutAlerte, effective);
+        } else if (typeAlerte != null) {
+            alertes = alerteRepository.findByTypeAlerte(typeAlerte, effective);
+        } else {
+            alertes = alerteRepository.findAll(effective);
+        }
+        return alertes.map(alerteMapper::toResponse);
     }
 
     public AlerteResponse getById(Long id) {
@@ -52,6 +69,7 @@ public class AlerteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Alerte not found with ID: " + id));
 
         alerte.setStatutAlerte(request.statutAlerte());
+        alerte.setDateCloture(request.statutAlerte() == StatutAlerte.CLOTUREE ? LocalDateTime.now() : null);
         Alerte saved = alerteRepository.save(alerte);
 
         odooQualityAlertService.updateAlerteStatut(saved.getId(), saved.getStatutAlerte());
@@ -83,6 +101,7 @@ public class AlerteService {
                             saved.getId(),
                             entrepot.getNomEntrepot(),
                             paysProperties.code(),
+                            paysProperties.nom(),
                             TypeAlerte.CONDITION_NON_IDEALE,
                             niveau,
                             lotReference,
@@ -110,6 +129,7 @@ public class AlerteService {
                 saved.getId(),
                 entrepot.getNomEntrepot(),
                 paysProperties.code(),
+                paysProperties.nom(),
                 TypeAlerte.LOT_TROP_ANCIEN,
                 NiveauAlerte.CRITIQUE,
                 lot.getReferenceLot(),

@@ -1,4 +1,5 @@
 import { http } from '@/lib/http';
+import { estIndisponible, estIntrouvable } from '@/lib/errors';
 import type { MesuresResponse, MesureStockage } from '@/types/api';
 
 export interface ListMesuresParams {
@@ -24,4 +25,24 @@ export async function latestMesure(codePays: string, entrepotId: number): Promis
     `/entrepots/${codePays}/${entrepotId}/mesures/latest`,
   );
   return data;
+}
+
+/**
+ * Dernière mesure, ou `null` quand il n'y en a aucune (404) ou que le pays est
+ * momentanément indisponible (503).
+ *
+ * Un entrepôt fraîchement créé n'a pas encore de mesure : c'est un état normal,
+ * pas une panne. Les vues qui affichent une liste d'entrepôts doivent donc pouvoir
+ * continuer sans celle-ci.
+ */
+export async function latestMesureOrNull(
+  codePays: string,
+  entrepotId: number,
+): Promise<MesureStockage | null> {
+  try {
+    return await latestMesure(codePays, entrepotId);
+  } catch (error) {
+    if (estIntrouvable(error) || estIndisponible(error)) return null;
+    throw error;
+  }
 }

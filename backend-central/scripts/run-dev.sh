@@ -26,7 +26,7 @@ echo "  port   : ${SERVER_PORT:-8090}"
 
 # backend-central depends on futurekawa-lib, so make the library resolvable first.
 REPO_ROOT="$(dirname "$ROOT_DIR")"
-mvn -B -q -f "$REPO_ROOT/pom.xml" -pl futurekawa-lib install
+mvn -B -q -f "$REPO_ROOT/pom.xml" -pl futurekawa-lib -am install
 
 cd "$ROOT_DIR"
 # Tests are skipped here for startup speed; run them with `mvn verify` at the root.

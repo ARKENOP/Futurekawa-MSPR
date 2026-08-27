@@ -39,7 +39,16 @@ public class MesureService {
     private final AlerteService alerteService;
     private final PaysProperties paysProperties;
 
-    public Page<MesureStockageResponse> getHistoryByEntrepot(Long entrepotId, Pageable pageable) {
+    public Page<MesureStockageResponse> getHistoryByEntrepot(Long entrepotId, LocalDateTime from,
+                                                             LocalDateTime to, Pageable pageable) {
+        if (from != null || to != null) {
+            LocalDateTime start = from != null ? from : LocalDateTime.of(1970, 1, 1, 0, 0);
+            LocalDateTime end = to != null ? to : LocalDateTime.now().plusYears(100);
+            return mesureRepository
+                    .findByEntrepotIdAndDateHeureMesureBetweenOrderByDateHeureMesureDesc(
+                            entrepotId, start, end, pageable)
+                    .map(mesureMapper::toResponse);
+        }
         return mesureRepository.findByEntrepotIdOrderByDateHeureMesureDesc(entrepotId, pageable)
                 .map(mesureMapper::toResponse);
     }

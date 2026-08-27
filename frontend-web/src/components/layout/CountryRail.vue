@@ -45,16 +45,18 @@ const nav = [
 
     <div class="picker">
       <div class="eyebrow picker-title">Périmètre pays</div>
-      <button
-        v-for="opt in options"
-        :key="opt.code"
-        class="picker-opt"
-        :class="{ selected: country.selected === opt.code }"
-        @click="country.select(opt.code)"
-      >
-        <span class="dot" />
-        {{ opt.label }}
-      </button>
+      <div class="picker-list">
+        <button
+          v-for="opt in options"
+          :key="opt.code"
+          class="picker-opt"
+          :class="{ selected: country.selected === opt.code }"
+          @click="country.select(opt.code)"
+        >
+          <span class="dot" />
+          {{ opt.label }}
+        </button>
+      </div>
     </div>
   </aside>
 </template>
@@ -69,6 +71,10 @@ const nav = [
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
+  /* The number of countries is a deployment choice, so the picker must stay usable
+     however long the list gets. */
+  height: 100vh;
+  overflow: hidden;
 }
 .brand {
   display: flex;
@@ -113,6 +119,15 @@ const nav = [
   color: var(--crema-gold);
   width: 1.1rem;
   text-align: center;
+}
+.picker {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.picker-list {
+  overflow-y: auto;
+  min-height: 0;
 }
 .picker-title {
   margin-bottom: 0.6rem;

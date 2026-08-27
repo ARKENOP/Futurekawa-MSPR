@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,6 +20,7 @@ import com.futurekawa.backendlocal.service.LotService;
 import com.futurekawa.lib.dto.request.CreateLotRequest;
 import com.futurekawa.lib.dto.request.UpdateLotRequest;
 import com.futurekawa.lib.dto.response.LotResponse;
+import com.futurekawa.lib.enums.StatutLot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,8 +32,9 @@ public class LotController {
     private final LotService lotService;
 
     @GetMapping
-    public Page<LotResponse> listLots(@ParameterObject Pageable pageable) {
-        return lotService.listAll(pageable);
+    public Page<LotResponse> listLots(@RequestParam(required = false) StatutLot statutLot,
+                                      @ParameterObject Pageable pageable) {
+        return lotService.listAll(statutLot, pageable);
     }
 
     @GetMapping("/{id}")

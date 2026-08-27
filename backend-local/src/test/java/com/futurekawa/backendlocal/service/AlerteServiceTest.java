@@ -1,5 +1,6 @@
 package com.futurekawa.backendlocal.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -93,7 +94,7 @@ class AlerteServiceTest {
         service.createConditionAlerte(entrepot, new MesureStockage(), NiveauAlerte.WARNING, "drift");
 
         verify(alerteRepository, never()).save(any());
-        verify(odooQualityAlertService, never()).pushAlerte(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(odooQualityAlertService, never()).pushAlerte(any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -114,7 +115,7 @@ class AlerteServiceTest {
         service.createConditionAlerte(entrepot, mesure, NiveauAlerte.CRITIQUE, "critical drift");
 
         verify(alerteRepository).save(any());
-        verify(odooQualityAlertService).pushAlerte(eq(42L), eq("Entrepôt BR"), eq("BR"),
+        verify(odooQualityAlertService).pushAlerte(eq(42L), eq("Entrepôt BR"), eq("BR"), any(),
                 eq(TypeAlerte.CONDITION_NON_IDEALE), eq(NiveauAlerte.CRITIQUE),
                 eq("LOT-1"), eq("critical drift"), any(LocalDateTime.class));
     }
@@ -128,7 +129,7 @@ class AlerteServiceTest {
 
         service.createConditionAlerte(entrepot, new MesureStockage(), NiveauAlerte.WARNING, "drift");
 
-        verify(odooQualityAlertService).pushAlerte(any(), eq("Entrepôt BR"), eq("BR"),
+        verify(odooQualityAlertService).pushAlerte(any(), eq("Entrepôt BR"), eq("BR"), any(),
                 eq(TypeAlerte.CONDITION_NON_IDEALE), eq(NiveauAlerte.WARNING),
                 isNull(), anyString(), any(LocalDateTime.class));
     }
@@ -146,8 +147,23 @@ class AlerteServiceTest {
         service.createPeremptionAlerte(entrepot, lot, "expired");
 
         verify(alerteRepository).save(any());
-        verify(odooQualityAlertService).pushAlerte(eq(7L), eq("Entrepôt BR"), eq("BR"),
+        verify(odooQualityAlertService).pushAlerte(eq(7L), eq("Entrepôt BR"), eq("BR"), any(),
                 eq(TypeAlerte.LOT_TROP_ANCIEN), eq(NiveauAlerte.CRITIQUE),
                 eq("LOT-OLD"), eq("expired"), any(LocalDateTime.class));
+    }
+    @Test
+    void closeAlerteStampsClosureDate() {
+        Alerte alerte = new Alerte();
+        alerte.setId(7L);
+        alerte.setStatutAlerte(StatutAlerte.OUVERTE);
+        when(alerteRepository.findById(7L)).thenReturn(Optional.of(alerte));
+        when(alerteRepository.save(any(Alerte.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(alerteMapper.toResponse(any(Alerte.class))).thenReturn(null);
+
+        service.closeAlerte(7L, new UpdateAlerteRequest(StatutAlerte.CLOTUREE));
+
+        assertThat(alerte.getStatutAlerte()).isEqualTo(StatutAlerte.CLOTUREE);
+        assertThat(alerte.getDateCloture()).isNotNull();
+        verify(odooQualityAlertService).updateAlerteStatut(7L, StatutAlerte.CLOTUREE);
     }
 }

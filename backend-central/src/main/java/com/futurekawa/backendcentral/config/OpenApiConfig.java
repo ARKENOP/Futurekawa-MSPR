@@ -15,8 +15,9 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("FutureKawa Backend Central")
                         .description("""
-                                Consolidated API aggregating the country backend-local instances \
-                                (BR/EC/CO). No application-level authentication: the central is \
+                                Consolidated API aggregating the deployed country backend-local \
+                                instances, one per country, listed in futurekawa.locals. \
+                                No application-level authentication: the central is \
                                 exposed on the headquarters' private network only \
                                 (see docs/ARCHITECTURE.md).""")
                         .version("v1"));

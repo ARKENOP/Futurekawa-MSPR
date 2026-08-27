@@ -50,7 +50,7 @@ class OdooQualityAlertServiceTest {
 
     @Test
     void pushAlerteBuildsLowercasedValsWithLotAndUtcDate() {
-        service.pushAlerte(42L, "Entrepôt BR", "BR", TypeAlerte.CONDITION_NON_IDEALE,
+        service.pushAlerte(42L, "Entrepôt BR", "BR", "Brésil", TypeAlerte.CONDITION_NON_IDEALE,
                 NiveauAlerte.CRITIQUE, "LOT-1", "critical drift",
                 LocalDateTime.of(2026, 1, 2, 3, 4, 5));
 
@@ -60,6 +60,7 @@ class OdooQualityAlertServiceTest {
                 .containsEntry("type_anomaly", "condition_non_ideale")
                 .containsEntry("niveau", "critique")
                 .containsEntry("pays_code", "BR")
+                .containsEntry("pays_nom", "Brésil")
                 .containsEntry("lot_reference", "LOT-1")
                 .containsEntry("message_description", "critical drift");
         assertThat((String) vals.get("date_creation")).matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}");
@@ -67,7 +68,7 @@ class OdooQualityAlertServiceTest {
 
     @Test
     void pushAlerteOmitsLotReferenceWhenNull() {
-        service.pushAlerte(1L, "E", "BR", TypeAlerte.LOT_TROP_ANCIEN,
+        service.pushAlerte(1L, "E", "BR", "Brésil", TypeAlerte.LOT_TROP_ANCIEN,
                 NiveauAlerte.WARNING, null, "msg", LocalDateTime.now());
 
         assertThat(capturedCreateVals()).doesNotContainKey("lot_reference");
@@ -78,7 +79,7 @@ class OdooQualityAlertServiceTest {
         when(odooRpcClient.executeKw(any(), any(), anyList(), anyMap()))
                 .thenThrow(new RuntimeException("Odoo down"));
 
-        service.pushAlerte(1L, "E", "BR", TypeAlerte.LOT_TROP_ANCIEN,
+        service.pushAlerte(1L, "E", "BR", "Brésil", TypeAlerte.LOT_TROP_ANCIEN,
                 NiveauAlerte.INFO, null, "msg", LocalDateTime.now());
     }
 

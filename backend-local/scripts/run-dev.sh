@@ -26,7 +26,7 @@ echo "  DB   : jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB
 # futurekawa-lib, so the library has to be resolvable before the module runs on
 # its own. Installing it is near-instant (a handful of records and enums).
 REPO_ROOT="$(dirname "$ROOT_DIR")"
-mvn -B -q -f "$REPO_ROOT/pom.xml" -pl futurekawa-lib install
+mvn -B -q -f "$REPO_ROOT/pom.xml" -pl futurekawa-lib -am install
 
 cd "$ROOT_DIR"
 # Tests are skipped here for startup speed; run them with `mvn verify` at the root.

@@ -23,7 +23,8 @@
                     <group>
                         <group string="Origine">
                             <field name="entrepot_nom"/>
-                            <field name="pays_code"/>
+                            <field name="pays_id"/>
+                            <field name="pays_code" readonly="1" groups="base.group_no_one"/>
                             <field name="lot_reference"/>
                             <field name="date_creation"/>
                             <field name="backend_alerte_id"/>
@@ -31,8 +32,6 @@
                         <group string="Classification">
                             <field name="type_anomaly"/>
                             <field name="niveau"/>
-                            <field name="valeur_enregistree"/>
-                            <field name="valeur_cible"/>
                             <field name="responsable_id"/>
                             <field name="date_resolution"/>
                         </group>
@@ -64,7 +63,7 @@
                 <field name="name"/>
                 <field name="date_creation"/>
                 <field name="entrepot_nom"/>
-                <field name="pays_code"/>
+                <field name="pays_id"/>
                 <field name="type_anomaly"/>
                 <field name="niveau" widget="badge"
                        decoration-danger="niveau == 'critique'"
@@ -87,9 +86,11 @@
                 <field name="name"/>
                 <field name="entrepot_nom"/>
                 <field name="lot_reference"/>
+                <field name="pays_id"/>
                 <filter name="open" string="Ouvertes" domain="[('state', 'not in', ('resolved', 'rejected'))]"/>
                 <filter name="critique" string="Critiques" domain="[('niveau', '=', 'critique')]"/>
                 <group expand="0" string="Regrouper par">
+                    <filter name="group_pays" string="Pays" context="{'group_by': 'pays_id'}"/>
                     <filter name="group_entrepot" string="Entrepot" context="{'group_by': 'entrepot_nom'}"/>
                     <filter name="group_niveau" string="Niveau" context="{'group_by': 'niveau'}"/>
                     <filter name="group_state" string="Statut" context="{'group_by': 'state'}"/>

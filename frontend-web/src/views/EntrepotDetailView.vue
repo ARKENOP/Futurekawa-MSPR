@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
 import { useCountryStore } from '@/stores/country';
 import { getEntrepot } from '@/api/entrepots';
-import { listMesures, latestMesure } from '@/api/mesures';
+import { listMesures, latestMesureOrNull } from '@/api/mesures';
 import { listLots } from '@/api/lots';
 import { listAlertes } from '@/api/alertes';
 import { flattenPageGroups, type WithCountry } from '@/lib/groups';
@@ -14,6 +14,8 @@ import AlertFeed from '@/components/alerts/AlertFeed.vue';
 import StatusBadge from '@/components/common/StatusBadge.vue';
 import LoadingState from '@/components/common/LoadingState.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
+import ErrorBanner from '@/components/common/ErrorBanner.vue';
+import { messageErreur } from '@/lib/errors';
 
 const route = useRoute();
 const country = useCountryStore();
@@ -27,15 +29,27 @@ const latest = ref<MesureStockage | null>(null);
 const series = ref<MesureStockage[]>([]);
 const lots = ref<WithCountry<Lot>[]>([]);
 const alertes = ref<WithCountry<Alerte>[]>([]);
+const erreur = ref('');
 
 const pays = computed<Pays | null>(() => country.pays.find((p) => p.codePays === codePays) ?? null);
 
 async function load(): Promise<void> {
   loading.value = true;
+  erreur.value = '';
+  try {
+    await chargerDonnees();
+  } catch (e) {
+    erreur.value = messageErreur(e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function chargerDonnees(): Promise<void> {
   if (!country.loaded) await country.load();
   const [ent, last, page, lotG, alG] = await Promise.all([
     getEntrepot(codePays, id),
-    latestMesure(codePays, id),
+    latestMesureOrNull(codePays, id),
     listMesures(codePays, id, { size: 48 }),
     listLots({ size: 100 }),
     listAlertes({ size: 100 }),
@@ -49,7 +63,6 @@ async function load(): Promise<void> {
   alertes.value = flattenPageGroups(alG).filter(
     (a) => a.codePays === codePays && a.entrepotId === id,
   );
-  loading.value = false;
 }
 
 onMounted(load);
@@ -57,6 +70,7 @@ onMounted(load);
 
 <template>
   <RouterLink to="/" class="back">‹ Retour au tableau de bord</RouterLink>
+  <ErrorBanner v-if="erreur" :message="erreur" @retry="load" />
   <LoadingState v-if="loading" />
   <template v-else-if="entrepot && pays">
     <header class="head">

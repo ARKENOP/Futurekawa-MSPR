@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_futurekawa_pays_list" model="ir.ui.view">
+        <field name="name">futurekawa.pays.list</field>
+        <field name="model">futurekawa.pays</field>
+        <field name="arch" type="xml">
+            <list string="Pays FutureKawa" editable="bottom"
+                  decoration-warning="not backend_url">
+                <field name="code"/>
+                <field name="nom"/>
+                <field name="backend_url" placeholder="http://backend-local-xx:8081"/>
+                <field name="alerte_count" string="Alertes"/>
+                <field name="actif" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_futurekawa_pays_form" model="ir.ui.view">
+        <field name="name">futurekawa.pays.form</field>
+        <field name="model">futurekawa.pays</field>
+        <field name="arch" type="xml">
+            <form string="Pays FutureKawa">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="code" placeholder="BR"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="nom" placeholder="Bresil"/>
+                            <field name="actif"/>
+                        </group>
+                        <group>
+                            <field name="backend_url" placeholder="http://backend-local-br:8081"/>
+                            <field name="alerte_count"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        Un pays est cree automatiquement des qu'un backend pousse une alerte
+                        avec un nouveau code. Renseignez ensuite son URL pour que les decisions
+                        qualite (analyse, validation, declassement) soient repercutees dans son
+                        backend.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_futurekawa_pays" model="ir.actions.act_window">
+        <field name="name">Pays</field>
+        <field name="res_model">futurekawa.pays</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiley_face">Aucun pays enregistre</p>
+            <p>Les pays apparaissent ici automatiquement a la premiere alerte poussee par leur
+               backend. Vous pouvez aussi les creer a l'avance pour renseigner leur URL.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_futurekawa_config" name="Configuration"
+              parent="menu_futurekawa_root" sequence="90"/>
+    <menuitem id="menu_futurekawa_pays" name="Pays"
+              parent="menu_futurekawa_config" action="action_futurekawa_pays" sequence="10"/>
+</odoo>

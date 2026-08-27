@@ -18,6 +18,7 @@ records them as auditable Quality Alert tickets visible in the Odoo interface.
         'data/partner_category_data.xml',
         'data/mail_template_data.xml',
         'views/quality_alert_views.xml',
+        'views/pays_views.xml',
     ],
     'installable': True,
     'application': True,

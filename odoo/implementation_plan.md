@@ -226,10 +226,50 @@ The shipped module in `odoo/addons/futurekawa_quality/` evolved from the specifi
   `niveau` (`info` / `warning` / `critique`, mirroring `NiveauAlerte`),
   `message_description`, `state`, and `backend_alerte_id` — the routing key the backend uses
   to find the ticket again when the alert is closed.
-- **State mapping** with the backend: `OUVERTE → draft`, `NOTIFIEE → investigation`,
-  `CLOTUREE → resolved`. Synchronisation is **one-way, local → Odoo**: the backend is the
-  source of truth for the alert lifecycle. The Odoo buttons write the ERP state but do not
-  call back into the backend yet.
+- **State mapping** with the backend, in both directions:
+  outbound `OUVERTE → draft`, `NOTIFIEE → investigation`, `CLOTUREE → resolved`;
+  inbound `draft → OUVERTE`, `investigation → NOTIFIEE`, `resolved → CLOTUREE`,
+  `rejected → CLOTUREE`. The backend has three states only, so declassing also closes the
+  alert and the "declassed" nuance stays in the ERP's own state and audit trail.
+- **The buttons call back into the owning backend** (added 27/08/2026).
+  `_push_state_to_backend()` sends `PATCH {backend}/api/v1/alertes/{backend_alerte_id}`
+  with `{"statutAlerte": ...}`; the base URL comes from `ir.config_parameter`
+  (`futurekawa.backend_url.<PAYS>`, seeded by `data/backend_config_data.xml`, timeout
+  `futurekawa.backend_timeout_s`). The backend stays the source of truth for the alert
+  lifecycle, and this is what keeps its deduplication honest: while its alert is `OUVERTE`
+  it suppresses new ones, so a ticket treated only in Odoo used to mute that entrepot
+  permanently.
+  A backend outage never rolls back the ERP decision — the failure is logged and posted in
+  the ticket's chatter, telling the user the backend still considers the alert open.
+  `create()` deliberately does **not** call back: the ticket came from the backend. The
+  return write from the backend is idempotent, so the loop terminates.
+- **Countries are data, not code** (added 27/08/2026). Model `futurekawa.pays`
+  (`code` unique, `nom`, `backend_url`, `actif`) with an editable list and a form under
+  *FutureKawa Quality → Configuration → Pays*. `pays_code` on the alert is a `Char`, not a
+  `Selection`: a fixed list would have **rejected any alert from a country added later**.
+  How a country gets into Odoo:
+  1. **Automatically, on its first alert.** `create()` resolves `pays_code` through
+     `futurekawa.pays._get_or_create()`, which creates the record if the code is unknown.
+     The backend also sends `pays_nom` (popped in `create()`, not a field on the ticket) so
+     the new country is named properly instead of showing its bare code.
+  2. **Manually**, through the same menu, to register a country before it ever alerts.
+  In both cases an administrator must fill in **`backend_url`** for that country before its
+  quality decisions can be pushed back — rows missing it are highlighted in the list. Until
+  then, clicking a decision button still updates the ERP and posts a message in the ticket's
+  chatter explaining that the backend was not notified.
+  Odoo has **no connection to `backend-central`**: it receives tickets from each country
+  backend and answers to that same backend. Routing both through the central (one URL in
+  Odoo, plus active country discovery via `GET {central}/api/v1/pays`) was considered and
+  deliberately not chosen, to avoid making the central a dependency of the ERP→backend path.
+- **Duplicate guard**: an `@api.constrains` refuses a second ticket for the same
+  `(backend_alerte_id, pays_code)`. Not a SQL `UNIQUE`, because Odoo stores an unset Integer
+  as `0` and hand-created tickets would all collide on `(0, country)`.
+- **`date_resolution`** is stamped by a `write()` override rather than by the buttons, so it
+  is filled whichever side closed the alert (ERP button, or the backend after a closure from
+  the supervision frontend).
+- **`valeur_enregistree` / `valeur_cible` were removed from the form view**: the backend
+  never populates them, so they always displayed 0.00. The measured values are in the
+  description text.
 - **E-mail** is Odoo's responsibility, not the backend's: `data/mail_template_data.xml`
   defines the `mail.template`, and `create()` fires it **only for `niveau == 'critique'`,
   wrapped in a try/except so a mail failure never blocks ticket creation.
