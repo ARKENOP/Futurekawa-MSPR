@@ -11,10 +11,6 @@ import com.futurekawa.backendlocal.config.OdooProperties;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Client for interacting with Odoo via JSON-RPC.
- * Uses Spring Boot 3.2+ RestClient.
- */
 @Slf4j
 @Component
 public class OdooRpcClient {
@@ -28,10 +24,6 @@ public class OdooRpcClient {
         this.odooProperties = odooProperties;
     }
 
-    /**
-     * Authenticates with Odoo and returns the user ID (UID).
-     * Caches the UID to avoid repeated authentication calls.
-     */
     public synchronized Integer authenticate() {
         if (cachedUid != null) {
             return cachedUid;
@@ -73,9 +65,6 @@ public class OdooRpcClient {
         throw new IllegalStateException("Failed to authenticate with Odoo. Response: " + response);
     }
 
-    /**
-     * Executes a method on an Odoo model via object/execute_kw.
-     */
     public Object executeKw(String model, String method, List<Object> args, Map<String, Object> kwargs) {
         Integer uid = authenticate();
 

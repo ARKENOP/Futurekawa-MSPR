@@ -14,12 +14,8 @@ import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.Exploitation;
 import com.futurekawa.backendlocal.model.Lot;
 import com.futurekawa.backendlocal.model.Pays;
-import com.futurekawa.backendlocal.model.enums.StatutLot;
+import com.futurekawa.lib.enums.StatutLot;
 
-/**
- * Exercises the custom expiry query against a real PostgreSQL, including the
- * date threshold and the "not already PERIME" exclusion.
- */
 class LotRepositoryIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired private LotRepository lotRepository;
@@ -57,7 +53,7 @@ class LotRepositoryIntegrationTest extends AbstractIntegrationTest {
 
         List<String> refs = result.stream().map(Lot::getReferenceLot).toList();
         assertThat(refs).contains(oldRef)
-                .doesNotContain(freshRef)     // newer than threshold
-                .doesNotContain(alreadyExpiredRef); // already PERIME
+                .doesNotContain(freshRef)
+                .doesNotContain(alreadyExpiredRef);
     }
 }

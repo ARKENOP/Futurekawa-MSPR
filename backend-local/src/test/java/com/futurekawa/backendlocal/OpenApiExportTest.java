@@ -10,10 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-/**
- * Smoke test that also exports the live OpenAPI specification to
- * {@code backend-local/api/openapi.yml} for the frontend to consume.
- */
 class OpenApiExportTest extends AbstractIntegrationTest {
 
     @Test

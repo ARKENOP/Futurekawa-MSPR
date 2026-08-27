@@ -9,27 +9,23 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 import com.futurekawa.backendlocal.dto.MqttMesurePayload;
-import com.futurekawa.backendlocal.dto.request.CreateLotRequest;
-import com.futurekawa.backendlocal.dto.response.AlerteResponse;
-import com.futurekawa.backendlocal.dto.response.EntrepotResponse;
-import com.futurekawa.backendlocal.dto.response.ExploitationResponse;
-import com.futurekawa.backendlocal.dto.response.LotResponse;
-import com.futurekawa.backendlocal.dto.response.MesureStockageResponse;
-import com.futurekawa.backendlocal.dto.response.PaysResponse;
 import com.futurekawa.backendlocal.model.Alerte;
 import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.Exploitation;
 import com.futurekawa.backendlocal.model.Lot;
 import com.futurekawa.backendlocal.model.MesureStockage;
 import com.futurekawa.backendlocal.model.Pays;
-import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
-import com.futurekawa.backendlocal.model.enums.StatutAlerte;
-import com.futurekawa.backendlocal.model.enums.TypeAlerte;
+import com.futurekawa.lib.dto.request.CreateLotRequest;
+import com.futurekawa.lib.dto.response.AlerteResponse;
+import com.futurekawa.lib.dto.response.EntrepotResponse;
+import com.futurekawa.lib.dto.response.ExploitationResponse;
+import com.futurekawa.lib.dto.response.LotResponse;
+import com.futurekawa.lib.dto.response.MesureStockageResponse;
+import com.futurekawa.lib.dto.response.PaysResponse;
+import com.futurekawa.lib.enums.NiveauAlerte;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.TypeAlerte;
 
-/**
- * Exercises the MapStruct-generated mapper implementations directly, including
- * the null-relation branches.
- */
 class MapperTest {
 
     private final LotMapper lotMapper = new LotMapperImpl();
@@ -118,7 +114,7 @@ class MapperTest {
         MesureStockage entity = mesureMapper.toEntity(payload);
         assertThat(entity.getIdCapteur()).isEqualTo("c9");
         assertThat(entity.getTemperatureC()).isEqualByComparingTo("20");
-        assertThat(entity.getDateHeureMesure()).isNull(); // ignored, set by service
+        assertThat(entity.getDateHeureMesure()).isNull();
     }
 
     @Test

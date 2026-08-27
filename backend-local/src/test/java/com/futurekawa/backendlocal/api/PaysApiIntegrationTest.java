@@ -8,10 +8,6 @@ import org.springframework.http.ResponseEntity;
 
 import com.futurekawa.backendlocal.AbstractIntegrationTest;
 
-/**
- * Verifies the country endpoint reflects the row seeded by DataInitializer
- * from the test profile (COUNTRY_CODE=BR).
- */
 class PaysApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test

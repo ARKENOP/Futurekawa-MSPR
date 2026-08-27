@@ -39,7 +39,7 @@ class PaysServiceTest {
     @Test
     void getCountryInfoMapsWhenSeeded() {
         Pays pays = new Pays();
-        var response = new com.futurekawa.backendlocal.dto.response.PaysResponse(
+        var response = new com.futurekawa.lib.dto.response.PaysResponse(
                 1L, "BR", "Brésil", null, null, null, null, true);
         when(paysRepository.findByCodePays("BR")).thenReturn(Optional.of(pays));
         when(paysMapper.toResponse(pays)).thenReturn(response);

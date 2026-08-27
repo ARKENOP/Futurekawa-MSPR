@@ -2,19 +2,13 @@ package com.futurekawa.backendcentral.registry;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.futurekawa.backendcentral.dto.response.Pays;
+import com.futurekawa.lib.dto.response.PaysResponse;
 
-/**
- * État courant connu d'un backend local : sa config statique (codePays attendu, url)
- * plus le dernier Pays reçu via GET /api/v1/pays (nomPays, seuils), rafraîchi par
- * CountryDiscoveryScheduler. `pays` est null tant que la première découverte n'a pas
- * réussi (le local n'est alors pas encore considéré "connu" pour l'agrégation).
- */
 public final class LocalBackendDescriptor {
 
     private final String codePays;
     private final String url;
-    private final AtomicReference<Pays> pays = new AtomicReference<>();
+    private final AtomicReference<PaysResponse> pays = new AtomicReference<>();
 
     public LocalBackendDescriptor(String codePays, String url) {
         this.codePays = codePays;
@@ -29,16 +23,16 @@ public final class LocalBackendDescriptor {
         return url;
     }
 
-    public Pays pays() {
+    public PaysResponse pays() {
         return pays.get();
     }
 
-    public void updatePays(Pays latest) {
+    public void updatePays(PaysResponse latest) {
         pays.set(latest);
     }
 
     public String nomPays() {
-        Pays latest = pays.get();
+        PaysResponse latest = pays.get();
         return latest != null ? latest.nomPays() : codePays;
     }
 }

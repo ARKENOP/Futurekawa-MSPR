@@ -16,13 +16,13 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import com.futurekawa.backendlocal.config.PaysProperties;
-import com.futurekawa.backendlocal.dto.response.EntrepotResponse;
 import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
 import com.futurekawa.backendlocal.mapper.EntrepotMapper;
 import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.Pays;
 import com.futurekawa.backendlocal.repository.EntrepotRepository;
 import com.futurekawa.backendlocal.repository.PaysRepository;
+import com.futurekawa.lib.dto.response.EntrepotResponse;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

@@ -3,12 +3,9 @@ package com.futurekawa.backendlocal.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import com.futurekawa.backendlocal.dto.response.AlerteResponse;
 import com.futurekawa.backendlocal.model.Alerte;
+import com.futurekawa.lib.dto.response.AlerteResponse;
 
-/**
- * MapStruct mapper for Alerte entities and DTOs.
- */
 @Mapper
 public interface AlerteMapper {
 

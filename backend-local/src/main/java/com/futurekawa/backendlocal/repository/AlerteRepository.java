@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.futurekawa.backendlocal.model.Alerte;
-import com.futurekawa.backendlocal.model.enums.StatutAlerte;
-import com.futurekawa.backendlocal.model.enums.TypeAlerte;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.TypeAlerte;
 
 @Repository
 public interface AlerteRepository extends JpaRepository<Alerte, Long> {
@@ -27,9 +27,6 @@ public interface AlerteRepository extends JpaRepository<Alerte, Long> {
     @EntityGraph(attributePaths = {"entrepot", "lotConcerne"})
     Page<Alerte> findByEntrepotId(Long entrepotId, Pageable pageable);
 
-    /**
-     * Used for deduplication: checking if an active alert of a certain type already exists for an entrepôt.
-     */
     Optional<Alerte> findFirstByEntrepotIdAndTypeAlerteAndStatutAlerte(
             Long entrepotId, TypeAlerte typeAlerte, StatutAlerte statutAlerte);
 }

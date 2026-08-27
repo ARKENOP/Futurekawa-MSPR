@@ -1,9 +1,14 @@
 package com.futurekawa.backendcentral.exception;
 
-/** Levée quand un codePays demandé (path/body) ne correspond à aucun backend local enregistré. */
+import lombok.Getter;
+
+@Getter
 public class UnknownCountryException extends RuntimeException {
 
+    private final String codePays;
+
     public UnknownCountryException(String codePays) {
-        super("Pays inconnu : " + codePays);
+        super("Unknown country: " + codePays);
+        this.codePays = codePays;
     }
 }

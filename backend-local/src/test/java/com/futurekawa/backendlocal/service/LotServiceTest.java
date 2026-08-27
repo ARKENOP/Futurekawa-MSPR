@@ -17,18 +17,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.futurekawa.backendlocal.dto.request.CreateLotRequest;
-import com.futurekawa.backendlocal.dto.request.UpdateLotRequest;
 import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
 import com.futurekawa.backendlocal.mapper.LotMapper;
 import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.Exploitation;
 import com.futurekawa.backendlocal.model.Lot;
 import com.futurekawa.backendlocal.model.Pays;
-import com.futurekawa.backendlocal.model.enums.StatutLot;
 import com.futurekawa.backendlocal.repository.EntrepotRepository;
 import com.futurekawa.backendlocal.repository.ExploitationRepository;
 import com.futurekawa.backendlocal.repository.LotRepository;
+import com.futurekawa.lib.dto.request.CreateLotRequest;
+import com.futurekawa.lib.dto.request.UpdateLotRequest;
+import com.futurekawa.lib.enums.StatutLot;
 
 @ExtendWith(MockitoExtension.class)
 class LotServiceTest {

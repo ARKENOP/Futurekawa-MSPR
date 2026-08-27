@@ -7,9 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.futurekawa.backendlocal.dto.request.CreateLotRequest;
-import com.futurekawa.backendlocal.dto.request.UpdateLotRequest;
-import com.futurekawa.backendlocal.dto.response.LotResponse;
 import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
 import com.futurekawa.backendlocal.mapper.LotMapper;
 import com.futurekawa.backendlocal.model.Entrepot;
@@ -18,6 +15,9 @@ import com.futurekawa.backendlocal.model.Lot;
 import com.futurekawa.backendlocal.repository.EntrepotRepository;
 import com.futurekawa.backendlocal.repository.ExploitationRepository;
 import com.futurekawa.backendlocal.repository.LotRepository;
+import com.futurekawa.lib.dto.request.CreateLotRequest;
+import com.futurekawa.lib.dto.request.UpdateLotRequest;
+import com.futurekawa.lib.dto.response.LotResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -52,6 +52,8 @@ public class LotService {
         lot.setPays(entrepot.getPays());
         lot.setExploitation(exploitation);
         lot.setEntrepot(entrepot);
+        // FIXME: overrides request.dateEntreeStockage(), so a backdated lot cannot be
+        // created — this blocks the FIFO and peremption demos.
         lot.setDateEntreeStockage(LocalDateTime.now());
 
         Lot saved = lotRepository.save(lot);

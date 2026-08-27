@@ -19,9 +19,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.futurekawa.backendlocal.config.PaysProperties;
 import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.Lot;
-import com.futurekawa.backendlocal.model.enums.StatutLot;
 import com.futurekawa.backendlocal.repository.LotRepository;
 import com.futurekawa.backendlocal.service.AlerteService;
+import com.futurekawa.lib.enums.StatutLot;
 
 @ExtendWith(MockitoExtension.class)
 class PeremptionSchedulerTest {

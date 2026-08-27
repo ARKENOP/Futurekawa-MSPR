@@ -15,14 +15,6 @@ import com.futurekawa.backendlocal.repository.PaysRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Seeds the {@code pays} table with the current country's identity and
- * storage thresholds on application startup.
- *
- * <p>Values come from {@link PaysProperties}, which are bound from
- * the {@code .env} file. If a row with the same {@code codePays} already
- * exists, the seed is skipped (idempotent).</p>
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -58,12 +50,6 @@ public class DataInitializer implements ApplicationRunner {
         });
     }
 
-    /**
-     * BETA seed: guarantees at least one exploitation + entrepôt exist so that
-     * incoming MQTT measures (topic .../entrepot/{id}/mesures) can be persisted.
-     * The first entrepôt gets id 1 on a fresh database — match it in the IoT
-     * topic / serial bridge. Idempotent: skipped if any entrepôt already exists.
-     */
     private void seedDevEntrepot(Pays pays) {
         if (entrepotRepository.count() > 0) {
             log.info("Entrepôt(s) already present — skipping dev seed.");

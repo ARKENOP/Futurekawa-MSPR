@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.futurekawa.backendcentral.dto.envelope.CountryGroup;
-import com.futurekawa.backendcentral.dto.response.Entrepot;
 import com.futurekawa.backendcentral.fanout.FanoutResult;
 import com.futurekawa.backendcentral.service.EntrepotAggregationService;
 import com.futurekawa.backendcentral.util.ResponseHeaders;
+import com.futurekawa.lib.dto.response.EntrepotResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,17 +25,17 @@ public class EntrepotController {
     private final EntrepotAggregationService entrepotAggregationService;
 
     @GetMapping
-    public ResponseEntity<List<CountryGroup<Entrepot>>> listEntrepots(
+    public ResponseEntity<List<CountryGroup<EntrepotResponse>>> listEntrepots(
             @RequestParam(required = false) Long exploitationId) {
-        FanoutResult<List<Entrepot>> result = entrepotAggregationService.listAll(exploitationId);
-        List<CountryGroup<Entrepot>> body = result.successes().stream()
+        FanoutResult<List<EntrepotResponse>> result = entrepotAggregationService.listAll(exploitationId);
+        List<CountryGroup<EntrepotResponse>> body = result.successes().stream()
                 .map(success -> new CountryGroup<>(success.codePays(), success.nomPays(), success.data()))
                 .toList();
         return ResponseHeaders.withUnavailable(result.unavailable()).body(body);
     }
 
     @GetMapping("/{codePays}/{id}")
-    public Entrepot getEntrepot(@PathVariable String codePays, @PathVariable Long id) {
+    public EntrepotResponse getEntrepot(@PathVariable String codePays, @PathVariable Long id) {
         return entrepotAggregationService.getById(codePays, id);
     }
 }

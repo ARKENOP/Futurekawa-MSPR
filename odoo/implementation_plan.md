@@ -1,8 +1,16 @@
 # Odoo 18 Addons — Implementation Plan
 
-This implementation plan details the custom ERP development requirements to support the FutureKawa MSPR coffee tracking application. 
+This implementation plan details the custom ERP development requirements to support the FutureKawa MSPR coffee tracking application.
 
-Following the **RNCP Bloc 4 certification** requirements for custom ERP programming, we define two custom Odoo v18 Community modules (`futurekawa_quality` and `futurekawa_inventory`). **Authentication is handled by Keycloak** (see architecture docs) — Odoo logs in via Keycloak using the built-in `auth_oauth` module. Odoo's role is strictly ERP + email alerting.
+Following the **RNCP Bloc 4 certification** requirements for custom ERP programming, we define two custom Odoo v18 Community modules (`futurekawa_quality` and `futurekawa_inventory`). Odoo's role is strictly ERP: non-conformity tickets, the FIFO recommendation engine, and the e-mail notification of the quality team.
+
+## Status (27/08/2026)
+
+| Module | State |
+| --- | --- |
+| `futurekawa_quality` | **Implemented and installed** on the Odoo 18 instance. Receives tickets from the country backends over JSON-RPC and e-mails the quality team on critical alerts. The code as shipped differs from §3 below — see "As-built" right after it. |
+| `futurekawa_inventory` | **Not implemented.** §4 remains the specification to build. |
+| SSO / OAuth | **Dropped.** Odoo uses its own local accounts. There is no Keycloak in the solution: user authentication is out of scope for this phase (see `docs/ARCHITECTURE.md` §6), so the `auth_oauth` configuration described in earlier revisions of this plan no longer applies.
 
 ---
 
@@ -38,22 +46,16 @@ odoo/
 
 ---
 
-## 2. Authentication — Keycloak (not Odoo)
+## 2. Authentication
 
-Authentication is **not handled by Odoo**. Keycloak is the sole OIDC identity provider for the entire system.
+Odoo authenticates its own users locally. **No external identity provider.** An earlier
+revision of this plan configured Keycloak as an OAuth2 provider through the built-in
+`auth_oauth` module; that was dropped along with Keycloak itself.
 
-Odoo is configured as an **OAuth2 client** via the built-in `auth_oauth` module, allowing Odoo users to log in with their Keycloak credentials (SSO). Role-based access control (RBAC) and JWT claim mapping (`role`, `country`) are configured directly in Keycloak realm settings.
-
-| Keycloak Role | Scope |
-|---|---|
-| `ROLE_SIEGE` | Read/Write on all countries |
-| `ROLE_MANAGER` + `country: BR/EC/CO` | Scoped to one country's backend |
-
-**Odoo modules required**:
-- Activate `auth_oauth` (Settings → Integrations → OAuth Authentication)
-- Configure Keycloak as the OAuth provider pointing to `http://keycloak:8080/realms/futurekawa`
-
----
+The backends do not log in as users: each country backend authenticates against the JSON-RPC
+API with `common.authenticate(db, login, apiKey)`, using an Odoo **API key** generated from
+the admin's *My Profile → Account Security* (requires Developer Mode). The key lives only in
+the backend's `.env`, never in source.
 
 ## 3. Module 1: `futurekawa_quality` (Automated Non-Conformities)
 
@@ -211,6 +213,33 @@ class QualityAlert(models.Model):
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_quality_alert_user,access_quality_alert_user,model_futurekawa_quality_alert,base.group_user,1,1,1,0
 ```
+
+---
+
+### 3.5 As-built (what is actually installed)
+
+The shipped module in `odoo/addons/futurekawa_quality/` evolved from the specification above:
+
+- **Model fields** follow the backend's alert model rather than a metrology reading:
+  `name` (sequence `ALT/%(year)s/`), `entrepot_nom`, `pays_code`, `lot_reference`,
+  `type_anomaly` (`condition_non_ideale` / `lot_trop_ancien`, mirroring `TypeAlerte`),
+  `niveau` (`info` / `warning` / `critique`, mirroring `NiveauAlerte`),
+  `message_description`, `state`, and `backend_alerte_id` — the routing key the backend uses
+  to find the ticket again when the alert is closed.
+- **State mapping** with the backend: `OUVERTE → draft`, `NOTIFIEE → investigation`,
+  `CLOTUREE → resolved`. Synchronisation is **one-way, local → Odoo**: the backend is the
+  source of truth for the alert lifecycle. The Odoo buttons write the ERP state but do not
+  call back into the backend yet.
+- **E-mail** is Odoo's responsibility, not the backend's: `data/mail_template_data.xml`
+  defines the `mail.template`, and `create()` fires it **only for `niveau == 'critique'`,
+  wrapped in a try/except so a mail failure never blocks ticket creation.
+- **Recipients are not hardcoded.** The module ships a `res.partner.category` tag
+  "Responsable Qualite FutureKawa"; `_notify_quality_team()` resolves every partner carrying
+  that tag and an e-mail address, and passes them as `recipient_ids`. Managing the
+  distribution list means tagging a contact in the Contacts app — no code change.
+- **Installation note**: install with a one-shot CLI run
+  (`docker run ... odoo -i futurekawa_quality --stop-after-init`). Installing through
+  `docker exec` against the live server deadlocks on foreign-key creation.
 
 ---
 

@@ -4,8 +4,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.futurekawa.backendlocal.dto.response.PaysResponse;
 import com.futurekawa.backendlocal.service.PaysService;
+import com.futurekawa.lib.dto.response.PaysResponse;
 
 import lombok.RequiredArgsConstructor;
 

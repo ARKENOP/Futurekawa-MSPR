@@ -32,7 +32,8 @@ function submit(): void {
       </label>
       <button class="btn btn-primary" type="submit">Entrer</button>
       <p class="note">
-        Authentification simulée (Keycloak/OIDC à brancher). Aucun mot de passe requis en dev.
+        Identification du poste de supervision. Solution déployée sur le réseau privé du siège :
+        l'authentification utilisateur est hors périmètre de cette phase.
       </p>
     </form>
   </div>

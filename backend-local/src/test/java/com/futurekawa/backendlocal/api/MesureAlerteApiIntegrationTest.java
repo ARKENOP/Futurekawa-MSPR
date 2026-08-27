@@ -8,9 +8,6 @@ import org.springframework.http.ResponseEntity;
 
 import com.futurekawa.backendlocal.AbstractIntegrationTest;
 
-/**
- * Read-side endpoints for measures and alerts, including the 404 paths.
- */
 class MesureAlerteApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test

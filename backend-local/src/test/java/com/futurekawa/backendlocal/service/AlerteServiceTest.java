@@ -21,18 +21,18 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import com.futurekawa.backendlocal.config.PaysProperties;
-import com.futurekawa.backendlocal.dto.request.UpdateAlerteRequest;
 import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
 import com.futurekawa.backendlocal.mapper.AlerteMapper;
 import com.futurekawa.backendlocal.model.Alerte;
 import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.Lot;
 import com.futurekawa.backendlocal.model.MesureStockage;
-import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
-import com.futurekawa.backendlocal.model.enums.StatutAlerte;
-import com.futurekawa.backendlocal.model.enums.TypeAlerte;
 import com.futurekawa.backendlocal.odoo.OdooQualityAlertService;
 import com.futurekawa.backendlocal.repository.AlerteRepository;
+import com.futurekawa.lib.dto.request.UpdateAlerteRequest;
+import com.futurekawa.lib.enums.NiveauAlerte;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.TypeAlerte;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

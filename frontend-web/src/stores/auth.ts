@@ -10,8 +10,10 @@ interface StoredAuth {
 }
 
 /**
- * Auth STUB (Keycloak non disponible en dev).
- * TODO: remplacer par keycloak-js + flux OIDC réel.
+ * Identification de poste, volontairement non authentifiante : elle nomme
+ * l'opérateur pour l'affichage et rien de plus. L'authentification utilisateur
+ * est hors périmètre MSPR (décision documentée dans docs/ARCHITECTURE.md) — la
+ * solution est déployée sur le réseau privé du siège, sans exposition publique.
  */
 export const useAuthStore = defineStore('auth', () => {
   const stored = localStorage.getItem(STORAGE_KEY);

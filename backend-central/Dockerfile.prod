@@ -1,0 +1,48 @@
+# ==============================================================================
+# FutureKawa Backend Central — PRODUCTION image (self-contained multi-stage)
+# ==============================================================================
+# Mirrors backend-local/Dockerfile.prod: stage 1 builds the Spring Boot fat jar
+# from source with Maven (JDK 25), stage 2 runs it on a lean JRE, so the
+# headquarters host needs no JDK/Maven of its own.
+#
+# IMPORTANT: the build context is the REPOSITORY ROOT, not backend-central/,
+# because this service depends on the futurekawa-lib module. docker-compose.yml
+# sets `context: ..` + `dockerfile: backend-central/Dockerfile.prod` accordingly.
+#
+# Tests are skipped here: they run in CI (`mvn verify`), not on the deployment host.
+# ==============================================================================
+
+# ── Stage 1: build ───────────────────────────────────────────────────────────
+FROM maven:3.9-eclipse-temurin-25 AS build
+WORKDIR /build
+
+# Resolve dependencies first so they cache across source-only changes. Every
+# module pom is copied because the root aggregator declares all of them; `-pl … -am`
+# then narrows the actual build to backend-central and the library it needs.
+COPY pom.xml .
+COPY futurekawa-lib/pom.xml futurekawa-lib/
+COPY backend-local/pom.xml backend-local/
+COPY backend-central/pom.xml backend-central/
+RUN mvn -B -q -pl backend-central -am dependency:go-offline
+
+COPY futurekawa-lib/src futurekawa-lib/src
+COPY backend-central/src backend-central/src
+RUN mvn -B -q -Dmaven.test.skip=true -pl backend-central -am clean package
+
+# ── Stage 2: runtime ─────────────────────────────────────────────────────────
+FROM eclipse-temurin:25-jre
+WORKDIR /app
+
+# curl is used by the compose healthcheck to poll the actuator endpoint.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Run as a non-root user in production.
+RUN useradd -r -u 1001 -s /usr/sbin/nologin futurekawa
+USER futurekawa
+
+COPY --from=build /build/backend-central/target/backend-central-0.1.0-SNAPSHOT.jar /app/backend-central.jar
+
+EXPOSE 8090
+ENTRYPOINT ["java", "-jar", "/app/backend-central.jar"]

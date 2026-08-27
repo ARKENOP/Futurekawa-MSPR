@@ -20,7 +20,7 @@ import lombok.Setter;
 @Table(name = "pays")
 @Getter
 @Setter
-@NoArgsConstructor // Required by JPA
+@NoArgsConstructor
 public class Pays implements Serializable {
 
     @Id

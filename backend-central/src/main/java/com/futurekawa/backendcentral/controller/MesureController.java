@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.futurekawa.backendcentral.dto.envelope.PageDto;
-import com.futurekawa.backendcentral.dto.response.MesureStockage;
 import com.futurekawa.backendcentral.service.MesureAggregationService;
+import com.futurekawa.lib.dto.response.MesureStockageResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +23,7 @@ public class MesureController {
     private final MesureAggregationService mesureAggregationService;
 
     @GetMapping
-    public PageDto<MesureStockage> getMesuresHistory(
+    public PageDto<MesureStockageResponse> getMesuresHistory(
             @PathVariable String codePays,
             @PathVariable Long id,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -34,7 +34,7 @@ public class MesureController {
     }
 
     @GetMapping("/latest")
-    public MesureStockage getLatestMesure(@PathVariable String codePays, @PathVariable Long id) {
+    public MesureStockageResponse getLatestMesure(@PathVariable String codePays, @PathVariable Long id) {
         return mesureAggregationService.getLatest(codePays, id);
     }
 }

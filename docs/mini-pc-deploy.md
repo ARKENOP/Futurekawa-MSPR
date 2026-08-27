@@ -61,22 +61,25 @@ Only the HTTP API is published. PostgreSQL and Mosquitto stay on the LAN.
 
 ## 3. Build the backend JAR
 
-On your dev machine (or the mini PC if it has the JDK + Maven):
+`backend-local` is a module of the `futurekawa-parent` Maven reactor and depends on the
+shared `futurekawa-lib` module, so **build from the repository root**, not from inside
+`backend-local/`:
 
 ```bash
-cd backend-local
-mvn clean package -Dmaven.test.skip=true
-# -> target/backend-local-0.1.0-SNAPSHOT.jar
+# from the repository root
+mvn -pl backend-local -am clean package
+# -> backend-local/target/backend-local-0.1.0-SNAPSHOT.jar  (futurekawa-lib is bundled inside)
 ```
 
-> `-Dmaven.test.skip=true` is required for now: the single test `OpenApiExportTest`
-> is not yet ported to Spring Boot 4. Remove the flag once that test is fixed.
+`-pl backend-local -am` builds the country backend plus the library it needs, and skips
+`backend-central`. Add `-Dmaven.test.skip=true` to skip the 68 tests when you only need
+the artefact; the full `mvn clean verify` also enforces the 80% JaCoCo gate.
 
 Copy the jar to the mini PC:
 
 ```bash
 ssh user@<MINI_PC_IP> "sudo mkdir -p <APP_DIR> && sudo chown \$USER <APP_DIR>"
-scp target/backend-local-0.1.0-SNAPSHOT.jar user@<MINI_PC_IP>:<APP_DIR>/backend-local.jar
+scp backend-local/target/backend-local-0.1.0-SNAPSHOT.jar user@<MINI_PC_IP>:<APP_DIR>/backend-local.jar
 ```
 
 ---
@@ -336,8 +339,11 @@ In the **Cloudflare Zero Trust dashboard**:
 ## 11. Updating the deployment
 
 ```bash
-# rebuild jar on dev machine
-mvn -C backend-local clean package -Dmaven.test.skip=true
+# rebuild the jar on the dev machine, from the repository root
+mvn -pl backend-local -am clean package -Dmaven.test.skip=true
 scp backend-local/target/backend-local-0.1.0-SNAPSHOT.jar user@<MINI_PC_IP>:/opt/futurekawa/backend-local.jar
 ssh user@<MINI_PC_IP> "sudo systemctl restart futurekawa-backend"
 ```
+
+> Building the image instead of the bare jar (`docker build -f backend-local/Dockerfile.prod .`)
+> also has to run from the repository root, for the same reason.
