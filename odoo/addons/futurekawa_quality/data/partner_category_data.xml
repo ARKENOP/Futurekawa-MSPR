@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Contact tag used to define who receives critical-alert emails.
-        Tag any Contact (Contacts app) with "Responsable Qualite FutureKawa"
-        and it will be emailed. No addresses are stored in source.
+        Contact tag defining who is copied on alert emails. The alert itself is
+        addressed to the exploitation manager of the country concerned (see
+        quality_alert._notify_alerte); contacts tagged "Responsable Qualite
+        FutureKawa" receive a copy so the quality department keeps oversight.
+        Tag or untag a Contact in the Contacts app to change the list. No
+        addresses are stored in source.
     -->
     <record id="partner_category_responsable_qualite" model="res.partner.category">
         <field name="name">Responsable Qualite FutureKawa</field>

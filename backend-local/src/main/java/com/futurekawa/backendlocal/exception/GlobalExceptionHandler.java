@@ -5,15 +5,14 @@ import java.net.URI;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleResourceNotFoundException(ResourceNotFoundException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -33,6 +32,26 @@ public class GlobalExceptionHandler {
                 .toList();
         problemDetail.setProperty("invalid_fields", fieldErrors);
 
+        return problemDetail;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "The request body could not be read. Check the JSON syntax and that every "
+                        + "status or type value is one the API accepts.");
+        problemDetail.setTitle("Bad Request");
+        problemDetail.setType(URI.create("https://api.futurekawa.com/errors/unreadable-body"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleParameterTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Invalid value for parameter '" + ex.getName() + "'.");
+        problemDetail.setTitle("Bad Request");
+        problemDetail.setType(URI.create("https://api.futurekawa.com/errors/invalid-parameter"));
+        problemDetail.setProperty("parameter", ex.getName());
         return problemDetail;
     }
 

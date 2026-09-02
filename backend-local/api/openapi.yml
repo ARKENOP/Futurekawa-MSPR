@@ -5,7 +5,7 @@ info:
     \ metrics. (Deployed per country)"
   version: v0.1.0
 servers:
-- url: http://localhost:37345
+- url: http://localhost:40631
   description: Generated server url
 paths:
   /api/v1/lots:

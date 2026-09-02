@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class OdooQualityAlertService {
-
     private static final String MODEL = "futurekawa.quality.alert";
     private static final DateTimeFormatter ODOO_DT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -43,8 +42,6 @@ public class OdooQualityAlertService {
             vals.put("date_creation", toOdooDatetime(dateCreation));
             if (paysCode != null) {
                 vals.put("pays_code", paysCode);
-                // Lets Odoo name a country it is seeing for the first time. Not a field on
-                // the ticket: the module reads it, then drops it.
                 vals.put("pays_nom", paysNom);
             }
             if (lotReference != null) {

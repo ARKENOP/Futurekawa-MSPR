@@ -1,5 +1,5 @@
 <template>
-  <div class="loading">
+  <div class="loading" data-testid="loading">
     <span class="bean" aria-hidden="true">☕</span>
     <span>Chargement…</span>
   </div>

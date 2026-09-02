@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 public final class ResponseHeaders {
-
     private static final String UNAVAILABLE_HEADER = "X-Unavailable-Countries";
 
     private ResponseHeaders() {

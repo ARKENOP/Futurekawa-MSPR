@@ -4,7 +4,7 @@ defineEmits<{ retry: [] }>();
 </script>
 
 <template>
-  <div class="error" role="alert">
+  <div class="error" role="alert" data-testid="error-banner">
     <span class="mark" aria-hidden="true">⚠</span>
     <p class="msg">{{ message }}</p>
     <button class="btn small" @click="$emit('retry')">Réessayer</button>

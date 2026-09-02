@@ -292,6 +292,35 @@ Rappel : `id` et `paysId` restent **locaux** ; l'unicité globale passe par `cod
 
 ---
 
+## 6 bis. Contrat d'erreur (RFC 7807)
+
+Toute erreur sort en `application/problem+json`. Le champ `type` est stable et
+constitue la clé sur laquelle le frontend peut se brancher ; `detail` est un texte
+lisible, jamais une trace.
+
+| Situation | Statut | `type` (suffixe de `https://api.futurekawa.com/errors/`) | Extension |
+| --- | --- | --- | --- |
+| Pays absent du registre `futurekawa.locals` | `404` | `unknown-country` | `codePays` |
+| Backend d'un pays injoignable, ou disjoncteur ouvert | `503` | `local-backend-unavailable` | `codePays` |
+| Le backend du pays a répondu 4xx (lot inexistant, entrepôt sans mesure) | statut relayé, ex. `404` | `local-backend-rejected` | — |
+| Corps de requête illisible : JSON malformé, ou valeur hors énumération (`statutLot`, `statutAlerte`, `typeAlerte`) | `400` | `unreadable-body` | — |
+| Paramètre de requête non convertible, ex. `?statutLot=BOGUS` | `400` | `invalid-parameter` | `parameter` |
+| Validation du corps échouée (champ obligatoire manquant, référence trop longue) | `400` | `validation-failed` | `invalid_fields[]` |
+| Erreur non prévue | `500` | `internal-error` | — |
+
+Deux points qui ont valeur de contrat :
+
+- **un 4xx venu d'un pays n'est jamais transformé en 503.** Un lot absent ou un entrepôt
+  encore sans mesure est le pays qui répond correctement ; le signaler comme une panne
+  ferait croire à une indisponibilité. Ces 4xx sont aussi exclus du taux d'échec du
+  disjoncteur (`resilience4j.ignore-exceptions`), sans quoi un tableau de bord qui
+  interroge un entrepôt neuf ouvrirait le circuit d'un pays en bonne santé ;
+- **une valeur d'énumération inconnue est un 400, pas un 500.** Les deux services
+  traitent `HttpMessageNotReadableException` et `MethodArgumentTypeMismatchException`
+  de façon identique, pour que les deux API échouent de la même manière.
+
+---
+
 ## 7. Maintenance du contrat
 
 1. Un champ de ressource change → le modifier **une seule fois** dans `futurekawa-lib`,

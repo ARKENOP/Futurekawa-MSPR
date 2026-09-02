@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class PaysAggregationService {
-
     private final CountryFanoutExecutor fanoutExecutor;
 
     public FanoutResult<PaysResponse> listAll() {

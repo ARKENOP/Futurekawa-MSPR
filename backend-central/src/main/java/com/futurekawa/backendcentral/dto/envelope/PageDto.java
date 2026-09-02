@@ -2,8 +2,6 @@ package com.futurekawa.backendcentral.dto.envelope;
 
 import java.util.List;
 
-// Spring's Page<T> is an interface, so Jackson cannot deserialize a backend-local
-// response into it without a mixin. This record carries the contract's fields verbatim.
 public record PageDto<T>(
         List<T> content,
         long totalElements,

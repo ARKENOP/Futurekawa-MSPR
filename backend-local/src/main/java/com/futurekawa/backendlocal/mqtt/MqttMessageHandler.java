@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class MqttMessageHandler {
-
     private final ObjectMapper objectMapper;
     private final MesureService mesureService;
 

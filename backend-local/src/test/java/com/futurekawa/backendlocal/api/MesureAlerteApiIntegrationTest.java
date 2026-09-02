@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.futurekawa.backendlocal.AbstractIntegrationTest;
 
 class MesureAlerteApiIntegrationTest extends AbstractIntegrationTest {
-
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @Test

@@ -29,7 +29,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class Alerte implements Serializable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_alerte")

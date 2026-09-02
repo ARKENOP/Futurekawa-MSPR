@@ -32,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AlerteService {
-
     private final AlerteRepository alerteRepository;
     private final AlerteMapper alerteMapper;
     private final OdooQualityAlertService odooQualityAlertService;
@@ -137,4 +136,5 @@ public class AlerteService {
                 saved.getDateHeureCreation()
         );
     }
+
 }

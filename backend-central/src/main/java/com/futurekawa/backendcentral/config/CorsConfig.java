@@ -9,11 +9,8 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 public class CorsConfig implements WebMvcConfigurer {
-
     private final CorsProperties corsProperties;
 
-    // X-Unavailable-Countries must be exposed explicitly, or the browser hides it
-    // and the frontend's country-outage banner stays empty.
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/v1/**")

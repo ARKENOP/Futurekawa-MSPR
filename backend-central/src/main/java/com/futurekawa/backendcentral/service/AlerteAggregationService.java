@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AlerteAggregationService {
-
     private final CountryFanoutExecutor fanoutExecutor;
     private final UnitaryCallExecutor unitaryCallExecutor;
 

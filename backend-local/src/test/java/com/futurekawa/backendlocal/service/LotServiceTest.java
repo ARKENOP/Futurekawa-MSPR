@@ -32,7 +32,6 @@ import com.futurekawa.lib.enums.StatutLot;
 
 @ExtendWith(MockitoExtension.class)
 class LotServiceTest {
-
     @Mock private LotRepository lotRepository;
     @Mock private ExploitationRepository exploitationRepository;
     @Mock private EntrepotRepository entrepotRepository;

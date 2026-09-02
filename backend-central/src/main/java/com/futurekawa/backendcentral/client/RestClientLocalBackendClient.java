@@ -22,7 +22,6 @@ import com.futurekawa.lib.enums.StatutLot;
 import com.futurekawa.lib.enums.TypeAlerte;
 
 public class RestClientLocalBackendClient implements LocalBackendClient {
-
     private final RestClient restClient;
 
     public RestClientLocalBackendClient(RestClient.Builder builder, String baseUrl) {

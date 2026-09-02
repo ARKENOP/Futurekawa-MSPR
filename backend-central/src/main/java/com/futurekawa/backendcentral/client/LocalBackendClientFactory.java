@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class LocalBackendClientFactory implements LocalBackendClient.Factory {
-
-    // Name matches the bean in RestClientConfig: renaming it changes the injection.
     private final RestClient.Builder localBackendRestClientBuilder;
 
     @Override

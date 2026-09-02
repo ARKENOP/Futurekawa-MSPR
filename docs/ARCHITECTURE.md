@@ -159,7 +159,7 @@ pom.xml                 ← futurekawa-parent : agrégateur + configuration comm
 └── backend-central/    ← dépend de futurekawa-lib
 ```
 
-`mvn clean verify` à la racine construit les trois modules, exécute les 68 tests de
+`mvn clean verify` à la racine construit les trois modules, exécute les 190 tests de
 `backend-local` et applique sa barrière de couverture JaCoCo à 80 %.
 
 **Règle de périmètre de la librairie** : un type ne monte dans `futurekawa-lib` que si
@@ -196,7 +196,11 @@ Conséquence sur les images Docker : les `Dockerfile.prod` se construisent depui
 | Alerting via le central (`local → central → Odoo`) | Non fait, et non nécessaire au fonctionnement : les deux sens passent directement entre le pays et Odoo. Plan détaillé si l'on veut centraliser : `backend-local/migration-alerting-to-backend-central-plan.md`. Le module Odoo adressant le backend par `pays_code` via `ir.config_parameter`, la bascule ne demanderait aucune modification de son code. |
 | Odoo `rejected` (« lot déclassé ») | Mappé sur `CLOTUREE`, le backend n'ayant que trois statuts. La nuance « déclassé » reste dans l'état et le journal d'audit de la fiche Odoo ; le `statutLot` du lot n'est pas modifié automatiquement. |
 | Module Odoo `futurekawa_inventory` (moteur FIFO) | Non implémenté. Spécifié dans `odoo/implementation_plan.md`. |
-| Tests de `backend-central` | Aucun. Le plugin JaCoCo est en place mais sans barrière, faute de tests. |
+| Tests de `backend-central` | 104 tests, ~95 % de lignes, barrière JaCoCo à 80 % active comme sur `backend-local`. Les backends pays y sont substitués au niveau du client (`StubLocalBackendClient`), donc fan-out, disjoncteurs, enveloppes et traduction d'erreurs restent du code de production. |
 | Multi-pays simultané sur un même hôte | `docker-compose.prod.yml` fixe les noms de conteneurs et les ports : lancer BR, EC et CO sur la même machine demande de paramétrer projet et ports. |
-| Filtrage et pagination côté frontend | Les filtres serveur existent et fonctionnent, mais les vues chargent encore `size=100` par pays puis filtrent en mémoire : au-delà de 100 lots par pays, l'affichage travaille sur un sous-ensemble. |
+| Filtrage et pagination côté frontend | Les filtres serveur existent et fonctionnent, mais les vues chargent encore `size=100` par pays puis filtrent et trient en mémoire : au-delà de 100 lots par pays, l'affichage travaille sur un sous-ensemble. |
+| Tests de composant frontend | Aucun (ni Vitest ni Vue Test Utils). L'interface est couverte par le lint, le typecheck, le build et la recette Selenium (31 scénarios), pas au niveau du composant isolé. |
+| Création d'exploitations / entrepôts | Pas d'API d'écriture : les deux contrôleurs sont en lecture seule, et ces enregistrements sont semés par l'application (`DataInitializer`, idempotent par nom). Conforme au cahier des charges, qui ne demande à l'interface que de *sélectionner* une exploitation (§III.3, §IV.2) ; ajouter un entrepôt demande donc une modification du modèle de semis puis un redéploiement. |
+| Liaison capteur ↔ entrepôt | Aucune entité `Capteur` : `idCapteur` n'est qu'une chaîne portée par la mesure, et le seul lien est le topic MQTT. Les brokers étant privés par pays, le risque résiduel est la mauvaise configuration, contenue en rendant `--country` et `--entrepot-id` obligatoires sur le pont série. Une entité `Capteur` reste souhaitable pour la traçabilité (phase 2). |
+| Un seul module IoT physique | Le cahier des charges (§III.2, §V.1) demande un module par **pays** et en fournit un par équipe. Un entrepôt est instrumenté pour de vrai (`arduino-uno-br-01`) ; les autres reçoivent des séries simulées publiées sur les mêmes topics du même broker, donc par le même chemin d'ingestion. Les capteurs simulés sont nommés `sim-<pays>-<nn>` pour que la distinction soit visible dans l'API et l'interface. |
 | Bus d'événements inter-sites (MQTT bridge) | Documenté comme cible de production, non construit. |

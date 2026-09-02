@@ -29,7 +29,6 @@ import com.futurekawa.lib.enums.TypeAlerte;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class OdooQualityAlertServiceTest {
-
     @Mock private OdooRpcClient odooRpcClient;
 
     private OdooQualityAlertService service;
@@ -81,6 +80,14 @@ class OdooQualityAlertServiceTest {
 
         service.pushAlerte(1L, "E", "BR", "Brésil", TypeAlerte.LOT_TROP_ANCIEN,
                 NiveauAlerte.INFO, null, "msg", LocalDateTime.now());
+    }
+
+    @Test
+    void pushAlerteSendsNoRecipientAddress() {
+        service.pushAlerte(42L, "Entrepôt BR", "BR", "Brésil", TypeAlerte.CONDITION_NON_IDEALE,
+                NiveauAlerte.CRITIQUE, "LOT-1", "critical drift", LocalDateTime.now());
+
+        assertThat(capturedCreateVals()).doesNotContainKey("responsable_email");
     }
 
     @Test

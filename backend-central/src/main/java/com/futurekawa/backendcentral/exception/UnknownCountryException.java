@@ -4,7 +4,6 @@ import lombok.Getter;
 
 @Getter
 public class UnknownCountryException extends RuntimeException {
-
     private final String codePays;
 
     public UnknownCountryException(String codePays) {

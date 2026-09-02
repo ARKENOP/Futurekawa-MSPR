@@ -17,7 +17,7 @@ function submit(): void {
 
 <template>
   <div class="login">
-    <form class="panel card" @submit.prevent="submit">
+    <form class="panel card" data-testid="login-form" @submit.prevent="submit">
       <div class="brand">
         <span class="mark">☕</span>
         <div>
@@ -28,9 +28,14 @@ function submit(): void {
       <p class="lead">Poste de supervision siège — accès consolidé multi-pays.</p>
       <label class="field">
         <span class="eyebrow">Identifiant</span>
-        <input v-model="username" type="text" autocomplete="username" />
+        <input
+          v-model="username"
+          type="text"
+          autocomplete="username"
+          data-testid="login-username"
+        />
       </label>
-      <button class="btn btn-primary" type="submit">Entrer</button>
+      <button class="btn btn-primary" type="submit" data-testid="login-submit">Entrer</button>
       <p class="note">
         Identification du poste de supervision. Solution déployée sur le réseau privé du siège :
         l'authentification utilisateur est hors périmètre de cette phase.

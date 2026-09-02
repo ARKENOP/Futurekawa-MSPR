@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MesureService {
-
     private final MesureStockageRepository mesureRepository;
     private final EntrepotRepository entrepotRepository;
     private final MesureStockageMapper mesureMapper;
@@ -75,6 +75,30 @@ public class MesureService {
         checkThresholds(entrepot, saved);
     }
 
+    /**
+     * Wording of an alert, in French.
+     *
+     * <p>This string is not a log message: it is displayed in the supervision
+     * interface, copied onto the Odoo non-conformity ticket, and mailed to the
+     * quality team. It is business content read by French-speaking staff, so it
+     * follows the frontend's language rather than the codebase's.
+     *
+     * <p>Both severities quote the ideal values, because the reading alone does not
+     * tell the recipient how far out of range the entrepôt actually is.
+     *
+     * <p>The locale is explicit. {@code String.format} otherwise uses the JVM
+     * default, so the decimal separator would follow whatever locale the container
+     * happens to start with — the same reading would render "38.0" here and "38,0"
+     * elsewhere, in text that is stored and mailed.
+     */
+    private String descriptionConditions(String prefixe, String nomEntrepot,
+                                         BigDecimal temp, BigDecimal idealTemp,
+                                         BigDecimal hum, BigDecimal idealHum) {
+        return String.format(Locale.FRENCH,
+                "%s dans %s : température %.1f °C (idéale %.1f °C), humidité %.1f %% (idéale %.1f %%).",
+                prefixe, nomEntrepot, temp, idealTemp, hum, idealHum);
+    }
+
     private void checkThresholds(Entrepot entrepot, MesureStockage mesure) {
         BigDecimal temp = mesure.getTemperatureC();
         BigDecimal hum = mesure.getHumiditePourcent();
@@ -93,12 +117,12 @@ public class MesureService {
 
         if (tempCritical || humCritical) {
             alerteService.createConditionAlerte(entrepot, mesure, NiveauAlerte.CRITIQUE,
-                    String.format("Critical conditions in %s: Temp=%.1f (Ideal=%.1f), Hum=%.1f (Ideal=%.1f)",
-                            entrepot.getNomEntrepot(), temp, idealTemp, hum, idealHum));
+                    descriptionConditions("Conditions critiques", entrepot.getNomEntrepot(),
+                            temp, idealTemp, hum, idealHum));
         } else if (tempWarning || humWarning) {
             alerteService.createConditionAlerte(entrepot, mesure, NiveauAlerte.WARNING,
-                    String.format("Warning conditions in %s: Temp=%.1f, Hum=%.1f",
-                            entrepot.getNomEntrepot(), temp, hum));
+                    descriptionConditions("Conditions hors tolérance", entrepot.getNomEntrepot(),
+                            temp, idealTemp, hum, idealHum));
         }
     }
 }

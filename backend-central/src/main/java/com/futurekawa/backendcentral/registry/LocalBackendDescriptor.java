@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.futurekawa.lib.dto.response.PaysResponse;
 
 public final class LocalBackendDescriptor {
-
     private final String codePays;
     private final String url;
     private final AtomicReference<PaysResponse> pays = new AtomicReference<>();

@@ -3,7 +3,7 @@ defineProps<{ message?: string }>();
 </script>
 
 <template>
-  <div class="empty">
+  <div class="empty" data-testid="empty-state">
     <span class="empty-mark" aria-hidden="true">⬡</span>
     <p>{{ message ?? 'Aucune donnée à afficher.' }}</p>
   </div>

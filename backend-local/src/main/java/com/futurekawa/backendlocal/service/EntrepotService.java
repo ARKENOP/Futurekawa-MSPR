@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EntrepotService {
-
     private final EntrepotRepository entrepotRepository;
     private final PaysRepository paysRepository;
     private final EntrepotMapper entrepotMapper;

@@ -4,17 +4,18 @@ import java.net.URI;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(LocalBackendUnavailableException.class)
     public ProblemDetail handleUnavailable(LocalBackendUnavailableException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
@@ -33,8 +34,6 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
-    // A 4xx raised by a backend-local is relayed with its own status, so the frontend
-    // sees the 404 the country actually returned rather than a misleading 503.
     @ExceptionHandler(HttpClientErrorException.class)
     public ProblemDetail handleLocalClientError(HttpClientErrorException ex) {
         HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
@@ -43,6 +42,27 @@ public class GlobalExceptionHandler {
                 "The country backend rejected the request: " + ex.getStatusText());
         problemDetail.setTitle(status != null ? status.getReasonPhrase() : "Bad Request");
         problemDetail.setType(URI.create("https://api.futurekawa.com/errors/local-backend-rejected"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
+        log.warn("Unreadable request body: {}", ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "The request body could not be read. Check the JSON syntax and that every "
+                        + "status or type value is one the API accepts.");
+        problemDetail.setTitle("Bad Request");
+        problemDetail.setType(URI.create("https://api.futurekawa.com/errors/unreadable-body"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleParameterTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Invalid value for parameter '" + ex.getName() + "'.");
+        problemDetail.setTitle("Bad Request");
+        problemDetail.setType(URI.create("https://api.futurekawa.com/errors/invalid-parameter"));
+        problemDetail.setProperty("parameter", ex.getName());
         return problemDetail;
     }
 

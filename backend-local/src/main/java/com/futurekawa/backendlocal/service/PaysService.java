@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PaysService {
-
     private final PaysRepository paysRepository;
     private final PaysMapper paysMapper;
     private final PaysProperties paysProperties;

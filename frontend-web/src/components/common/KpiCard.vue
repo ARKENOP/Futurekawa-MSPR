@@ -3,9 +3,14 @@ defineProps<{ label: string; value: number | string; accent?: string; hint?: str
 </script>
 
 <template>
-  <div class="kpi card" :style="{ '--accent': accent ?? 'var(--crema-gold)' }">
+  <div
+    class="kpi card"
+    data-testid="kpi"
+    :data-label="label"
+    :style="{ '--accent': accent ?? 'var(--crema-gold)' }"
+  >
     <div class="eyebrow">{{ label }}</div>
-    <div class="kpi-value mono">{{ value }}</div>
+    <div class="kpi-value mono" data-testid="kpi-value">{{ value }}</div>
     <div v-if="hint" class="kpi-hint">{{ hint }}</div>
   </div>
 </template>

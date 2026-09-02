@@ -4,7 +4,6 @@ import lombok.Getter;
 
 @Getter
 public class LocalBackendUnavailableException extends RuntimeException {
-
     private final String codePays;
 
     public LocalBackendUnavailableException(String codePays, Throwable cause) {

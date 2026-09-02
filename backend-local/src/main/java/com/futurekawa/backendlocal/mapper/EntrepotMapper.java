@@ -8,7 +8,6 @@ import com.futurekawa.lib.dto.response.EntrepotResponse;
 
 @Mapper
 public interface EntrepotMapper {
-
     @Mapping(target = "exploitationId", source = "exploitation.id")
     @Mapping(target = "paysId", source = "pays.id")
     EntrepotResponse toResponse(Entrepot entrepot);

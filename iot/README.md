@@ -97,6 +97,12 @@ python serial_mqtt_bridge.py \
     --country BR --entrepot-id 1
 ```
 
+> `--country` et `--entrepot-id` sont **obligatoires** et n'ont pas de valeur par
+> défaut : ils sont le seul lien entre un capteur physique et un entrepôt (le backend
+> lit l'entrepôt dans le topic, jamais dans le payload). Avec une valeur par défaut,
+> un second pont démarré sans ces options publierait les relevés de son entrepôt sous
+> l'identifiant du premier, en silence.
+
 Le pont ajoute `timestamp` (epoch ms) et publie sur :
 
 ```

@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LotAggregationService {
-
     private final CountryFanoutExecutor fanoutExecutor;
     private final UnitaryCallExecutor unitaryCallExecutor;
 

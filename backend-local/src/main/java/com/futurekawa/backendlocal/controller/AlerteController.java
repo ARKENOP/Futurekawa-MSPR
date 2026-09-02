@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/alertes")
 @RequiredArgsConstructor
 public class AlerteController {
-
     private final AlerteService alerteService;
 
     @GetMapping

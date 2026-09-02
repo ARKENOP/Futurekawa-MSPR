@@ -24,7 +24,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class MesureStockage implements Serializable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_mesure")

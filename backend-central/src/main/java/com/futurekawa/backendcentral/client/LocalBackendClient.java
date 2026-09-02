@@ -18,7 +18,6 @@ import com.futurekawa.lib.enums.StatutLot;
 import com.futurekawa.lib.enums.TypeAlerte;
 
 public interface LocalBackendClient {
-
     PaysResponse getPays();
 
     List<ExploitationResponse> getExploitations();

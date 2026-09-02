@@ -9,10 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-// Country codes are not known at compile time, so @CircuitBreaker(name = ...) cannot
-// be used: the breakers are created on demand from the "default" config instead.
 public class CountryCircuitBreakers {
-
     private final CircuitBreakerRegistry registry;
 
     public CircuitBreaker forCountry(String codePays) {

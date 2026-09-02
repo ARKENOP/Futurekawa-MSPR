@@ -5,7 +5,6 @@ from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
-
 class FuturekawaPays(models.Model):
     """A country served by its own backend-local instance.
 
@@ -54,7 +53,6 @@ class FuturekawaPays(models.Model):
 
     @api.depends('code', 'nom')
     def _compute_display_name(self):
-        # Odoo 17+ replaced name_get() with this.
         for record in self:
             record.display_name = '%s - %s' % (record.code, record.nom) if record.nom else record.code
 

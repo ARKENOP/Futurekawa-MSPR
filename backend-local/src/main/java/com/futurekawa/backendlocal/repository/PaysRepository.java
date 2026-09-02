@@ -9,6 +9,5 @@ import com.futurekawa.backendlocal.model.Pays;
 
 @Repository
 public interface PaysRepository extends JpaRepository<Pays, Long> {
-
     Optional<Pays> findByCodePays(String codePays);
 }

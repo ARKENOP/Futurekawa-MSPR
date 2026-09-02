@@ -47,10 +47,8 @@ function paginationParams(url: URL): { page: number; size: number } {
 }
 
 export const handlers = [
-  // ── Pays ────────────────────────────────────────────────
   http.get(`${API}/pays`, () => HttpResponse.json(countries.map((c) => pays[c.codePays]))),
 
-  // ── Exploitations (groupé) ──────────────────────────────
   http.get(`${API}/exploitations`, () => {
     const groups: CountryGroup<(typeof exploitations)[string][number]>[] = countries.map((c) => ({
       codePays: c.codePays,
@@ -60,7 +58,6 @@ export const handlers = [
     return HttpResponse.json(groups);
   }),
 
-  // ── Entrepôts (groupé) ──────────────────────────────────
   http.get(`${API}/entrepots`, ({ request }) => {
     const url = new URL(request.url);
     const exploitationId = url.searchParams.get('exploitationId');
@@ -74,20 +71,17 @@ export const handlers = [
     return HttpResponse.json(groups);
   }),
 
-  // ── Entrepôt : détail ───────────────────────────────────
   http.get(`${API}/entrepots/:codePays/:id`, ({ params }) => {
     const list = entrepots[params.codePays as string] ?? [];
     const found = list.find((e) => e.id === Number(params.id));
     return found ? HttpResponse.json(found) : new HttpResponse(null, { status: 404 });
   }),
 
-  // ── Mesures : dernière ──────────────────────────────────
   http.get(`${API}/entrepots/:codePays/:id/mesures/latest`, ({ params }) => {
     const series = generateMesures(params.codePays as string, Number(params.id));
     return HttpResponse.json(series[series.length - 1]);
   }),
 
-  // ── Mesures : série paginée ─────────────────────────────
   http.get(`${API}/entrepots/:codePays/:id/mesures`, ({ request, params }) => {
     const url = new URL(request.url);
     const { page, size } = paginationParams(url);
@@ -95,7 +89,6 @@ export const handlers = [
     return HttpResponse.json(buildPage(series, page, size));
   }),
 
-  // ── Lots (groupé + paginé par pays) ─────────────────────
   http.get(`${API}/lots`, ({ request }) => {
     const url = new URL(request.url);
     const { page, size } = paginationParams(url);
@@ -108,13 +101,11 @@ export const handlers = [
     return HttpResponse.json(groups);
   }),
 
-  // ── Lot : détail ────────────────────────────────────────
   http.get(`${API}/lots/:codePays/:id`, ({ params }) => {
     const found = (lots[params.codePays as string] ?? []).find((l) => l.id === Number(params.id));
     return found ? HttpResponse.json(found) : new HttpResponse(null, { status: 404 });
   }),
 
-  // ── Lot : création ──────────────────────────────────────
   http.post(`${API}/lots`, async ({ request }) => {
     const body = (await request.json()) as CreateLotRequest & { codePays: string };
     const list = lots[body.codePays] ?? [];
@@ -134,7 +125,6 @@ export const handlers = [
     return HttpResponse.json(created, { status: 201 });
   }),
 
-  // ── Lot : changement de statut ──────────────────────────
   http.patch(`${API}/lots/:codePays/:id`, async ({ request, params }) => {
     const body = (await request.json()) as UpdateLotRequest;
     const found = (lots[params.codePays as string] ?? []).find((l) => l.id === Number(params.id));
@@ -143,7 +133,6 @@ export const handlers = [
     return HttpResponse.json(found);
   }),
 
-  // ── Alertes (groupé + paginé par pays) ──────────────────
   http.get(`${API}/alertes`, ({ request }) => {
     const url = new URL(request.url);
     const { page, size } = paginationParams(url);
@@ -159,7 +148,6 @@ export const handlers = [
     return HttpResponse.json(groups);
   }),
 
-  // ── Alerte : détail ─────────────────────────────────────
   http.get(`${API}/alertes/:codePays/:id`, ({ params }) => {
     const found = (alertes[params.codePays as string] ?? []).find(
       (a) => a.id === Number(params.id),
@@ -167,7 +155,6 @@ export const handlers = [
     return found ? HttpResponse.json(found) : new HttpResponse(null, { status: 404 });
   }),
 
-  // ── Alerte : changement de statut (clôture) ─────────────
   http.patch(`${API}/alertes/:codePays/:id`, async ({ request, params }) => {
     const body = (await request.json()) as UpdateAlerteRequest;
     const found = (alertes[params.codePays as string] ?? []).find(

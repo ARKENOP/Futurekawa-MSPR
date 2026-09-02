@@ -27,7 +27,6 @@ import com.futurekawa.lib.enums.StatutAlerte;
 import com.futurekawa.lib.enums.TypeAlerte;
 
 class MapperTest {
-
     private final LotMapper lotMapper = new LotMapperImpl();
     private final MesureStockageMapper mesureMapper = new MesureStockageMapperImpl();
     private final AlerteMapper alerteMapper = new AlerteMapperImpl();

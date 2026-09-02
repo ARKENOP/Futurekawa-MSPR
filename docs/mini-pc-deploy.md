@@ -1,9 +1,14 @@
-# Mini PC Deployment — FutureKawa Backend Local + IoT Bridge
+# Mini PC Deployment — FutureKawa demonstration platform
 
-How to run the **backend-local** microservice and the **Arduino serial→MQTT bridge**
-on a mini PC (Ubuntu Server), keeping **PostgreSQL** and **Mosquitto** on the NAS,
-and exposing the API publicly through a **Cloudflare Tunnel** running on the NAS —
-protected by **Cloudflare Access**.
+How the whole solution runs on one mini PC: the **siège** (backend-central +
+frontend behind nginx), the **Brésil** country backend with its physical Arduino
+serial→MQTT bridge, and a second **Équateur** country stack complete with its own
+PostgreSQL and Mosquitto. The API is also exposed publicly through a **Cloudflare
+Tunnel** on the NAS, protected by **Cloudflare Access**.
+
+> Sections 3 to 11 describe the Brésil backend and its bridge in detail — that is the
+> tier with real hardware. Section 12 covers the siège stack and how a further country
+> is added.
 
 ---
 
@@ -17,21 +22,36 @@ protected by **Cloudflare Access**.
                    │ Cloudflare edge │  ← TLS + Access (auth)
                    └────────┬────────┘
                             │  encrypted tunnel
-        ┌───────────────────▼──────────────────────┐
-        │ NAS  (192.168.1.176)                      │
-        │   • cloudflared (tunnel)                  │
-        │   • PostgreSQL :5432                       │
-        │   • Mosquitto  :1883                       │
-        └───────────────────┬──────────────────────┘
+        ┌───────────────────▼──────────────────────────────────┐
+        │ NAS  (192.168.1.176)                                  │
+        │   • cloudflared (tunnel)                              │
+        │   • PostgreSQL :5432   ← Brésil backend + Odoo        │
+        │   • Mosquitto  :1883   ← the physical Arduino         │
+        │   • Odoo 18    :8069   ← the ERP, shared by all pays  │
+        └───────────────────┬──────────────────────────────────┘
                             │  LAN (plain HTTP)
-        ┌───────────────────▼──────────────────────┐
-        │ Mini PC — Ubuntu Server (<MINI_PC_IP>)    │
-        │   • Spring Boot backend-local :8081        │
-        │   • Python serial bridge ← USB ← Arduino   │
-        └───────────────────────────────────────────┘
+        ┌───────────────────▼──────────────────────────────────┐
+        │ Mini PC — Ubuntu Server (<MINI_PC_IP>)                │
+        │                                                       │
+        │  docker network `siege`                               │
+        │   • nginx  :8080  → static frontend + /api/v1 proxy   │
+        │   • backend-central :8090                             │
+        │   • backend-local (BR) :8081                          │
+        │   • backend-local-ec  :8082  (API only)               │
+        │                                                       │
+        │  docker network `pays-ec`   (private)                  │
+        │   • postgres-ec    (not published)                    │
+        │   • mosquitto-ec   :1884→1883                         │
+        │   • backend-local-ec                                  │
+        │                                                       │
+        │   • Python serial bridge ← USB ← Arduino Uno (BR)     │
+        └───────────────────────────────────────────────────────┘
 ```
 
-Only the HTTP API is published. PostgreSQL and Mosquitto stay on the LAN.
+Only HTTP is published. Each country's database and broker sit on that country's own
+network: `pays-ec` is unreachable from `siege`, and only Équateur's REST API is joined
+to both. Brésil still uses the NAS PostgreSQL and Mosquitto, because its physical
+Arduino publishes there.
 
 ### Placeholders used below
 | Placeholder | Meaning | Example |
@@ -72,7 +92,7 @@ mvn -pl backend-local -am clean package
 ```
 
 `-pl backend-local -am` builds the country backend plus the library it needs, and skips
-`backend-central`. Add `-Dmaven.test.skip=true` to skip the 68 tests when you only need
+`backend-central`. Add `-Dmaven.test.skip=true` to skip the 190 tests when you only need
 the artefact; the full `mvn clean verify` also enforces the 80% JaCoCo gate.
 
 Copy the jar to the mini PC:
@@ -347,3 +367,130 @@ ssh user@<MINI_PC_IP> "sudo systemctl restart futurekawa-backend"
 
 > Building the image instead of the bare jar (`docker build -f backend-local/Dockerfile.prod .`)
 > also has to run from the repository root, for the same reason.
+
+---
+
+## 12. Siège stack and additional countries
+
+Everything on the mini PC is driven by one Compose file, `<APP_DIR>/docker-compose.yml`.
+
+### Layout of `<APP_DIR>`
+
+```
+/opt/futurekawa/
+├── docker-compose.yml        # siège + every country stack
+├── Dockerfile                # backend-local image (prebuilt jar on a JRE)
+├── Dockerfile.central        # backend-central image
+├── backend-local.jar
+├── backend-central.jar
+├── .env                      # Brésil  (NAS Postgres/Mosquitto, port 8081)
+├── .env.ec                   # Équateur (in-stack Postgres/Mosquitto, port 8082)
+├── .env.central              # FUTUREKAWA_LOCALS registry, CORS, timeouts
+├── ec/mosquitto.conf         # Équateur broker config
+├── web/dist/                 # built frontend (VITE_USE_MOCKS=false)
+├── web/nginx.conf            # serves dist + proxies /api/v1 to the central
+└── serial-bridge/            # Python venv + bridge script (Brésil)
+```
+
+### Why the frontend needs nginx
+
+`frontend-web/src/lib/http.ts` uses `VITE_API_BASE_URL ?? '/api/v1'` — a **relative**
+path, which only resolves behind a proxy (in development the Vite proxy plays that
+role). `web/nginx.conf` reproduces it in production:
+
+- `location /api/v1/` → `proxy_pass http://backend-central:8090`, so browser and API
+  share one origin and CORS never comes into play;
+- `try_files $uri $uri/ /index.html`, **mandatory** because the router uses
+  `createWebHistory`: without it, reloading `/lots` returns 404.
+
+Build with `VITE_USE_MOCKS=false` and delete `dist/mockServiceWorker.js` — the MSW
+service worker belongs to the test recette, not to a deployment.
+
+### Registering countries with the siège
+
+`.env.central` carries the open-ended registry — Docker DNS names, not IP addresses:
+
+```dotenv
+FUTUREKAWA_LOCALS=BR=http://backend-local:8081,EC=http://backend-local-ec:8082
+```
+
+The central fails fast on a malformed pair or a duplicate code, and logs an error if a
+backend reports a `codePays` different from the one it is registered under.
+
+### Adding a country
+
+1. **Create its env file** from an existing one, keeping the shared ERP settings and
+   overriding the rest — done on the host so the Odoo API key never leaves it:
+
+   ```bash
+   cd /opt/futurekawa
+   PWD_NEW=$(openssl rand -hex 20)
+   sed -E \
+     -e "s|^COUNTRY_CODE=.*|COUNTRY_CODE=CO|" \
+     -e "s|^COUNTRY_NAME=.*|COUNTRY_NAME=Colombie|" \
+     -e "s|^TEMPERATURE_IDEALE_C=.*|TEMPERATURE_IDEALE_C=26|" \
+     -e "s|^HUMIDITE_IDEALE_POURCENT=.*|HUMIDITE_IDEALE_POURCENT=80|" \
+     -e "s|^MQTT_BROKER_URL=.*|MQTT_BROKER_URL=tcp://mosquitto-co:1883|" \
+     -e "s|^MQTT_TOPIC=.*|MQTT_TOPIC=futurekawa/CO/entrepot/+/mesures|" \
+     -e "s|^MQTT_CLIENT_ID=.*|MQTT_CLIENT_ID=backend-local-CO|" \
+     -e "s|^POSTGRES_HOST=.*|POSTGRES_HOST=postgres-co|" \
+     -e "s|^POSTGRES_USER=.*|POSTGRES_USER=futurekawa|" \
+     -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${PWD_NEW}|" \
+     -e "s|^SERVER_PORT=.*|SERVER_PORT=8083|" \
+     .env > .env.co && chmod 600 .env.co
+   ```
+
+2. **Add its three services** to `docker-compose.yml`, copying the `*-ec` block: a
+   `postgres-co` and a `mosquitto-co` on a new private `pays-co` network, and a
+   `backend-local-co` on **both** `pays-co` and `siege`. `postgres-co` can share the
+   same `env_file`, because the variable names are the ones the postgres image expects.
+
+3. **Register it** by appending `,CO=http://backend-local-co:8083` to
+   `FUTUREKAWA_LOCALS` in `.env.central`.
+
+4. `docker compose up -d --build`.
+
+Nothing else changes. The country seeds its own `Pays`, exploitations and entrepôts at
+startup (`DataInitializer`, idempotent, names derived from `COUNTRY_NAME`), the central
+discovers it on the next sweep, and the frontend picks it up from `GET /api/v1/pays` —
+no frontend rebuild, no code edit.
+
+### Publishing measures for a country without hardware
+
+Only Brésil has a sensor. For any other country, publish onto its own broker — the real
+ingestion path, so threshold detection, alerting and the Odoo push all run for real:
+
+```bash
+docker exec futurekawa-mosquitto-ec sh -c \
+  "mosquitto_pub -h localhost -t futurekawa/EC/entrepot/2/mesures -q 1 \
+   -m '{\"id_capteur\":\"sim-ec-02\",\"temperature_c\":31.0,\"humidite_pourcent\":65.6,\"timestamp\":1788353279786}'"
+```
+
+Name simulated sensors `sim-<pays>-<nn>` so the demonstration data is
+self-documenting: `idCapteur` is visible in the API and the UI, which keeps the real
+Arduino (`arduino-uno-br-01`) distinguishable from the rest.
+
+> Publishing while a backend is restarting **loses the messages** — QoS 1 without a
+> persistent session. Wait for `/actuator/health` before publishing.
+
+### Verification
+
+```bash
+curl -s http://<MINI_PC_IP>:8081/actuator/health      # Brésil
+curl -s http://<MINI_PC_IP>:8082/actuator/health      # Équateur
+curl -s http://<MINI_PC_IP>:8090/api/v1/pays          # both, consolidated
+curl -sI http://<MINI_PC_IP>:8080/lots                # SPA fallback -> 200
+```
+
+Resilience, worth demonstrating live:
+
+```bash
+docker stop futurekawa-backend-local-ec
+curl -sD - http://<MINI_PC_IP>:8090/api/v1/lots -o /dev/null | grep -i x-unavailable
+#   x-unavailable-countries: EC        -> and the UI shows its outage banner
+docker start futurekawa-backend-local-ec
+```
+
+> Recreating a country's container briefly opens the central's circuit breaker, so calls
+> for that country answer `503` for about 30 seconds before it half-opens. That is the
+> breaker doing its job — wait rather than debug.

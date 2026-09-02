@@ -10,7 +10,6 @@ import org.springframework.web.client.RestClient;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
-
     @LocalServerPort
     protected int port;
 

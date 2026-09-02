@@ -1,0 +1,30 @@
+# ==============================================================================
+# Test profile — used by the integration tests (@ActiveProfiles("test")).
+#
+# The country backends are replaced by StubLocalBackendClient (see
+# StubLocalBackendConfig), so these URLs are never dialled: they only have to be
+# the keys the stub registry is looked up by. Two countries are declared, which is
+# the minimum needed to prove the fan-out consolidates several and survives one of
+# them being down.
+# ==============================================================================
+futurekawa:
+  locals:
+    - BR=http://backend-local-br.test:8081
+    - EC=http://backend-local-ec.test:8081
+
+  # The scheduler still runs once at startup (ApplicationRunner), which is what
+  # populates nomPays on each descriptor. This delay keeps it from firing again
+  # mid-test and perturbing the call counters.
+  discovery:
+    fixed-delay-ms: 3600000
+
+  client:
+    connect-timeout-ms: 500
+    read-timeout-ms: 500
+
+  cors:
+    allowed-origins: http://localhost:5173
+
+logging:
+  level:
+    com.futurekawa: INFO

@@ -36,6 +36,8 @@ const nav = [
         :to="item.to"
         class="nav-link"
         active-class="active"
+        data-testid="nav-link"
+        :data-nav="item.to"
         @click="$emit('navigate')"
       >
         <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
@@ -51,6 +53,8 @@ const nav = [
           :key="opt.code"
           class="picker-opt"
           :class="{ selected: country.selected === opt.code }"
+          data-testid="country-option"
+          :data-code="opt.code"
           @click="country.select(opt.code)"
         >
           <span class="dot" />
@@ -71,8 +75,6 @@ const nav = [
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
-  /* The number of countries is a deployment choice, so the picker must stay usable
-     however long the list gets. */
   height: 100vh;
   overflow: hidden;
 }

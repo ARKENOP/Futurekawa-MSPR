@@ -18,7 +18,12 @@ onMounted(() => {
     <div class="shell-main">
       <AppHeader @toggle-rail="railOpen = !railOpen" />
       <main class="shell-content">
-        <div v-if="country.unavailable.length" class="banner" role="status">
+        <div
+          v-if="country.unavailable.length"
+          class="banner"
+          role="status"
+          data-testid="outage-banner"
+        >
           Pays indisponibles (backend local injoignable) :
           <strong>{{ country.unavailable.join(', ') }}</strong>
         </div>

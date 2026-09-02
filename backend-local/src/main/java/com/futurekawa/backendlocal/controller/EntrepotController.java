@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/entrepots")
 @RequiredArgsConstructor
 public class EntrepotController {
-
     private final EntrepotService entrepotService;
 
     @GetMapping

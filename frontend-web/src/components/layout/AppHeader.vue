@@ -34,14 +34,14 @@ function logout(): void {
   <header class="header">
     <button class="burger" aria-label="Menu" @click="$emit('toggle-rail')">☰</button>
     <div class="titles">
-      <h1>{{ title }}</h1>
+      <h1 data-testid="page-title">{{ title }}</h1>
       <span class="eyebrow">{{ scope }}</span>
     </div>
     <div class="spacer" />
     <div class="user">
-      <span class="mono">{{ auth.user }}</span>
+      <span class="mono" data-testid="current-user">{{ auth.user }}</span>
       <span class="role">{{ auth.roles.join(', ') }}</span>
-      <button class="btn" @click="logout">Déconnexion</button>
+      <button class="btn" data-testid="logout" @click="logout">Déconnexion</button>
     </div>
   </header>
 </template>

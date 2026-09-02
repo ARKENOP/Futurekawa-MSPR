@@ -17,7 +17,6 @@ import com.futurekawa.backendlocal.model.Pays;
 import com.futurekawa.lib.enums.StatutLot;
 
 class LotRepositoryIntegrationTest extends AbstractIntegrationTest {
-
     @Autowired private LotRepository lotRepository;
     @Autowired private PaysRepository paysRepository;
     @Autowired private ExploitationRepository exploitationRepository;

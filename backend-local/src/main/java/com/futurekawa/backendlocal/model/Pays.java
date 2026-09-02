@@ -22,7 +22,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class Pays implements Serializable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_pays")

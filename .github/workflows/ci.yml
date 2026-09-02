@@ -114,3 +114,50 @@ jobs:
           name: frontend-dist
           path: frontend-web/dist/
           retention-days: 5
+
+  # ── Recette d'interface: Selenium against the built frontend ────────────────
+  # Runs on the MSW fixtures (VITE_USE_MOCKS=true), so it needs no country
+  # backend, no database and no broker — the tier integration is covered by the
+  # Java suites instead. That is what makes this runnable on a clean runner.
+  recette-ui:
+    name: Recette UI (Selenium)
+    runs-on: ubuntu-latest
+    needs: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Selenium and pytest
+        run: pip install -r tests-e2e/requirements.txt
+
+      # ubuntu-latest ships Chrome; Selenium Manager fetches the matching driver.
+      - name: Report the browser in use
+        run: google-chrome --version
+
+      - name: Run the UI acceptance suite
+        run: tests-e2e/run-tests.sh
+
+      - name: Upload the preview server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recette-ui-preview-log
+          path: /tmp/futurekawa-e2e-preview.log
+          retention-days: 5

@@ -38,7 +38,6 @@ import com.futurekawa.lib.enums.TypeAlerte;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AlerteServiceTest {
-
     @Mock private AlerteRepository alerteRepository;
     @Mock private AlerteMapper alerteMapper;
     @Mock private OdooQualityAlertService odooQualityAlertService;
@@ -52,9 +51,25 @@ class AlerteServiceTest {
     void setUp() {
         service = new AlerteService(alerteRepository, alerteMapper, odooQualityAlertService, paysProperties);
         when(paysProperties.code()).thenReturn("BR");
+        when(paysProperties.nom()).thenReturn("Brésil");
+
         entrepot = new Entrepot();
         entrepot.setId(1L);
         entrepot.setNomEntrepot("Entrepôt BR");
+    }
+
+    private void noActiveConditionAlerte() {
+        when(alerteRepository.findFirstByEntrepotIdAndTypeAlerteAndStatutAlerte(
+                1L, TypeAlerte.CONDITION_NON_IDEALE, StatutAlerte.OUVERTE))
+                .thenReturn(Optional.empty());
+    }
+
+    private void saveAssigns(long id) {
+        when(alerteRepository.save(any())).thenAnswer(inv -> {
+            Alerte a = inv.getArgument(0);
+            a.setId(id);
+            return a;
+        });
     }
 
     @Test
@@ -94,19 +109,14 @@ class AlerteServiceTest {
         service.createConditionAlerte(entrepot, new MesureStockage(), NiveauAlerte.WARNING, "drift");
 
         verify(alerteRepository, never()).save(any());
-        verify(odooQualityAlertService, never()).pushAlerte(any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(odooQualityAlertService, never()).pushAlerte(
+                any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
     void createConditionAlertePersistsAndPushesWhenNoDuplicate() {
-        when(alerteRepository.findFirstByEntrepotIdAndTypeAlerteAndStatutAlerte(
-                1L, TypeAlerte.CONDITION_NON_IDEALE, StatutAlerte.OUVERTE))
-                .thenReturn(Optional.empty());
-        when(alerteRepository.save(any())).thenAnswer(inv -> {
-            Alerte a = inv.getArgument(0);
-            a.setId(42L);
-            return a;
-        });
+        noActiveConditionAlerte();
+        saveAssigns(42L);
         Lot lot = new Lot();
         lot.setReferenceLot("LOT-1");
         MesureStockage mesure = new MesureStockage();
@@ -115,42 +125,37 @@ class AlerteServiceTest {
         service.createConditionAlerte(entrepot, mesure, NiveauAlerte.CRITIQUE, "critical drift");
 
         verify(alerteRepository).save(any());
-        verify(odooQualityAlertService).pushAlerte(eq(42L), eq("Entrepôt BR"), eq("BR"), any(),
+        verify(odooQualityAlertService).pushAlerte(eq(42L), eq("Entrepôt BR"), eq("BR"), eq("Brésil"),
                 eq(TypeAlerte.CONDITION_NON_IDEALE), eq(NiveauAlerte.CRITIQUE),
                 eq("LOT-1"), eq("critical drift"), any(LocalDateTime.class));
     }
 
     @Test
     void createConditionAlertePushesNullLotReferenceWhenNoLot() {
-        when(alerteRepository.findFirstByEntrepotIdAndTypeAlerteAndStatutAlerte(
-                1L, TypeAlerte.CONDITION_NON_IDEALE, StatutAlerte.OUVERTE))
-                .thenReturn(Optional.empty());
+        noActiveConditionAlerte();
         when(alerteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.createConditionAlerte(entrepot, new MesureStockage(), NiveauAlerte.WARNING, "drift");
 
-        verify(odooQualityAlertService).pushAlerte(any(), eq("Entrepôt BR"), eq("BR"), any(),
+        verify(odooQualityAlertService).pushAlerte(any(), eq("Entrepôt BR"), eq("BR"), eq("Brésil"),
                 eq(TypeAlerte.CONDITION_NON_IDEALE), eq(NiveauAlerte.WARNING),
                 isNull(), anyString(), any(LocalDateTime.class));
     }
 
     @Test
     void createPeremptionAlertePersistsAndPushesCritical() {
-        when(alerteRepository.save(any())).thenAnswer(inv -> {
-            Alerte a = inv.getArgument(0);
-            a.setId(7L);
-            return a;
-        });
+        saveAssigns(7L);
         Lot lot = new Lot();
         lot.setReferenceLot("LOT-OLD");
 
         service.createPeremptionAlerte(entrepot, lot, "expired");
 
         verify(alerteRepository).save(any());
-        verify(odooQualityAlertService).pushAlerte(eq(7L), eq("Entrepôt BR"), eq("BR"), any(),
+        verify(odooQualityAlertService).pushAlerte(eq(7L), eq("Entrepôt BR"), eq("BR"), eq("Brésil"),
                 eq(TypeAlerte.LOT_TROP_ANCIEN), eq(NiveauAlerte.CRITIQUE),
                 eq("LOT-OLD"), eq("expired"), any(LocalDateTime.class));
     }
+
     @Test
     void closeAlerteStampsClosureDate() {
         Alerte alerte = new Alerte();

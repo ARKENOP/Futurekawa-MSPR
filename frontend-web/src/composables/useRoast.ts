@@ -20,9 +20,9 @@ export function ecartNormalise({ valeur, ideale, tolerance }: RoastInput): numbe
 /** Couleur le long de la rampe de torréfaction selon l'écart. */
 export function roastColor(input: RoastInput): string {
   const e = Math.abs(ecartNormalise(input));
-  if (e <= 1) return cssVar('--crema-gold', '#e8c89a'); // bande idéale
-  if (e <= 2) return cssVar('--roast-cinnamon', '#c9a56b'); // warning
-  return cssVar('--cherry', '#d2452e'); // critique
+  if (e <= 1) return cssVar('--crema-gold', '#e8c89a');
+  if (e <= 2) return cssVar('--roast-cinnamon', '#c9a56b');
+  return cssVar('--cherry', '#d2452e');
 }
 
 /** Niveau lisible dérivé de l'écart (cohérent avec NiveauAlerte). */
@@ -62,10 +62,10 @@ export function gaugeOption(input: RoastInput, unite: string, animate = true): E
           lineStyle: {
             width: 14,
             color: [
-              [0.333, green], // froid / sous-optimal
-              [0.667, gold], // bande idéale "juste torréfié"
-              [0.833, cinnamon], // warning
-              [1, cherry], // surchauffe / critique
+              [0.333, green],
+              [0.667, gold],
+              [0.833, cinnamon],
+              [1, cherry],
             ],
           },
         },

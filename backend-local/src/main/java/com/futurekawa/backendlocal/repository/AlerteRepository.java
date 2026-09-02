@@ -14,7 +14,6 @@ import com.futurekawa.lib.enums.TypeAlerte;
 
 @Repository
 public interface AlerteRepository extends JpaRepository<Alerte, Long> {
-
     @EntityGraph(attributePaths = {"entrepot", "lotConcerne"})
     Page<Alerte> findAll(Pageable pageable);
 

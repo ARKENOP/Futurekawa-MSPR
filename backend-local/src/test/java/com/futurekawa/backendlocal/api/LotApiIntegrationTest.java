@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.futurekawa.backendlocal.AbstractIntegrationTest;
 
 class LotApiIntegrationTest extends AbstractIntegrationTest {
-
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private long createLot(String reference) throws Exception {
