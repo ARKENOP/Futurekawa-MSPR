@@ -32,7 +32,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/lots")
 @RequiredArgsConstructor
 public class LotController {
-
     private final LotAggregationService lotAggregationService;
 
     @GetMapping

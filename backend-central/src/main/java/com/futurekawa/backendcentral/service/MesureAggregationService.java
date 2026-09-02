@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class MesureAggregationService {
-
     private final UnitaryCallExecutor unitaryCallExecutor;
 
     public PageDto<MesureStockageResponse> getHistory(String codePays, Long entrepotId, LocalDateTime from, LocalDateTime to,

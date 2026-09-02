@@ -84,6 +84,12 @@ springdoc:
 
 # ── Country / Pays ───────────────────────────────────────────────────────────
 futurekawa:
+  seed:
+    enabled: ${SEED_REFERENCE_DATA:true}
+
+  peremption:
+    cron: ${PEREMPTION_CRON:0 0 * * * *}
+
   pays:
     code: ${COUNTRY_CODE:BR}
     nom: ${COUNTRY_NAME:Brésil}

@@ -16,7 +16,6 @@ import com.futurekawa.lib.enums.StatutLot;
 
 @Repository
 public interface LotRepository extends JpaRepository<Lot, Long> {
-
     @EntityGraph(attributePaths = {"exploitation", "entrepot", "pays"})
     Page<Lot> findAll(Pageable pageable);
 

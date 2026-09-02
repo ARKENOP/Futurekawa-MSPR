@@ -71,12 +71,12 @@ async function onClose(a: WithCountry<Alerte>): Promise<void> {
   <div class="toolbar">
     <div class="filters">
       <label class="eyebrow">Statut</label>
-      <select v-model="statutFilter" class="select">
+      <select v-model="statutFilter" class="select" data-testid="alerte-statut-filter">
         <option value="">Tous</option>
         <option v-for="s in statuts" :key="s" :value="s">{{ s }}</option>
       </select>
       <label class="eyebrow">Type</label>
-      <select v-model="typeFilter" class="select">
+      <select v-model="typeFilter" class="select" data-testid="alerte-type-filter">
         <option value="">Tous</option>
         <option v-for="t in types" :key="t" :value="t">{{ t }}</option>
       </select>

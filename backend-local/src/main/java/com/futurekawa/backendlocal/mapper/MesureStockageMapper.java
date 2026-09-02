@@ -9,7 +9,6 @@ import com.futurekawa.lib.dto.response.MesureStockageResponse;
 
 @Mapper
 public interface MesureStockageMapper {
-
     @Mapping(target = "entrepotId", source = "entrepot.id")
     @Mapping(target = "lotId", source = "lot.id")
     MesureStockageResponse toResponse(MesureStockage mesureStockage);

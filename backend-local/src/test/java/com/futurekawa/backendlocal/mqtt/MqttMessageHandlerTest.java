@@ -26,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class MqttMessageHandlerTest {
-
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
 

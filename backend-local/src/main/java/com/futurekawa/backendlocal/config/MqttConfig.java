@@ -15,12 +15,10 @@ import org.springframework.messaging.MessageChannel;
 
 import lombok.RequiredArgsConstructor;
 
-// Disabled in the test profile so the context starts without a broker.
 @Configuration
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "futurekawa.mqtt", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MqttConfig {
-
     private final MqttProperties mqttProperties;
 
     @Bean

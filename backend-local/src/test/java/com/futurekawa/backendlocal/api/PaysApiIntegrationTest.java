@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import com.futurekawa.backendlocal.AbstractIntegrationTest;
 
 class PaysApiIntegrationTest extends AbstractIntegrationTest {
-
     @Test
     void returnsSeededCountry() {
         ResponseEntity<String> response = client.get()

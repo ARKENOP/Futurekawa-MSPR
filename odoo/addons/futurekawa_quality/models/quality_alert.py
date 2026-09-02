@@ -8,7 +8,6 @@ from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
-
 class QualityAlert(models.Model):
     _name = 'futurekawa.quality.alert'
     _description = 'Fiche de Non-Conformite Qualite FutureKawa'
@@ -20,16 +19,12 @@ class QualityAlert(models.Model):
         readonly=True, index=True, default=lambda self: 'New',
     )
 
-    # ── Origin (pushed by the local backend) ────────────────────────────────
     backend_alerte_id = fields.Integer(
         string='ID Alerte (Backend)', index=True, copy=False,
         help="Identifiant de l'alerte dans la base du backend local. "
              "Sert de cle d'idempotence pour eviter les doublons.",
     )
     entrepot_nom = fields.Char(string='Entrepot', required=True, tracking=True)
-    # Free text, not a Selection: the set of countries is a deployment choice (one
-    # backend-local per country, each declaring its COUNTRY_CODE), so a fixed list here
-    # would reject any country added later.
     pays_code = fields.Char(string='Code Pays', index=True, tracking=True)
     pays_id = fields.Many2one(
         'futurekawa.pays', string='Pays', tracking=True, ondelete='restrict',
@@ -37,7 +32,6 @@ class QualityAlert(models.Model):
     )
     lot_reference = fields.Char(string='Reference Lot', tracking=True)
 
-    # ── Classification (mirrors the backend enums) ──────────────────────────
     type_anomaly = fields.Selection(
         selection=[
             ('condition_non_ideale', 'Conditions de stockage non ideales'),
@@ -54,12 +48,10 @@ class QualityAlert(models.Model):
         string='Niveau', required=True, default='warning', tracking=True,
     )
 
-    # ── Measured values (optional) ──────────────────────────────────────────
     valeur_enregistree = fields.Float(string='Valeur Enregistree')
     valeur_cible = fields.Float(string='Valeur Cible (Seuil)')
     message_description = fields.Text(string='Description')
 
-    # ── Lifecycle ───────────────────────────────────────────────────────────
     date_creation = fields.Datetime(
         string='Date de Detection', default=fields.Datetime.now, readonly=True,
     )
@@ -76,9 +68,6 @@ class QualityAlert(models.Model):
     notes_audit = fields.Text(string="Notes d'Audit Qualite")
     responsable_id = fields.Many2one('res.users', string='Responsable Qualite', tracking=True)
 
-    # Odoo state -> backend StatutAlerte (com.futurekawa.lib.enums.StatutAlerte).
-    # The backend has no 'rejected' equivalent: declassing also closes the alert, and
-    # the distinction stays in this ticket's own state and audit trail.
     _BACKEND_STATUT = {
         'draft': 'OUVERTE',
         'investigation': 'NOTIFIEE',
@@ -108,9 +97,6 @@ class QualityAlert(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        # `pays_nom` is sent by the backend alongside `pays_code` but is not a field on
-        # this model: it only serves to name a country Odoo has never seen. Pop it before
-        # super(), or the ORM rejects the whole create for an unknown field.
         noms_pays = []
         for vals in vals_list:
             noms_pays.append(vals.pop('pays_nom', None))
@@ -140,12 +126,19 @@ class QualityAlert(models.Model):
             record.pays_id = pays_model._get_or_create(record.pays_code, nom)
 
     def _notify_quality_team(self):
-        """Email the quality team for CRITICAL alerts.
+        """Email the quality team when an alert ticket is created.
 
-        Recipients are resolved dynamically from the Contacts tagged
-        "Responsable Qualite FutureKawa" (no hardcoded addresses). Failures must
-        never block ticket creation (the backend creates these records over the
-        API), so any mail error is caught and logged.
+        Recipients are managed entirely in Odoo: they are resolved at send time
+        from the Contacts tagged "Responsable Qualite FutureKawa", so the list is
+        changed by tagging or untagging a contact in the Contacts app. No address
+        is stored in source, and the backend sends none.
+
+        There is no filter on `niveau`: the cahier des charges (III.4) asks for a
+        notification as soon as storage conditions leave the acceptable range, and
+        the backend only escalates to `critique` beyond twice the tolerance.
+
+        Failures must never block ticket creation (the backend creates these
+        records over the API), so any mail error is caught and logged.
         """
         template = self.env.ref(
             'futurekawa_quality.mail_template_quality_alert',
@@ -163,21 +156,18 @@ class QualityAlert(models.Model):
         if not recipients:
             _logger.warning(
                 "No 'Responsable Qualite FutureKawa' contact has an email; "
-                "critical-alert email skipped.")
+                "alert notification skipped. Tag a contact in the Contacts app.")
             return
 
         for record in self:
-            if record.niveau != 'critique':
-                continue
             try:
                 template.send_mail(
                     record.id, force_send=True,
                     email_values={'recipient_ids': [(6, 0, recipients.ids)]})
-                _logger.info("Quality alert email sent for %s to %d recipient(s)",
-                             record.name, len(recipients))
+                _logger.info("Alert email sent for %s (%s) to %d recipient(s)",
+                             record.name, record.niveau, len(recipients))
             except Exception:
-                _logger.exception(
-                    "Failed to send quality alert email for %s", record.name)
+                _logger.exception("Failed to send the alert email for %s", record.name)
 
     def write(self, vals):
         """Stamp the resolution date whenever the ticket reaches a terminal state.
@@ -188,8 +178,6 @@ class QualityAlert(models.Model):
         if vals.get('state') in ('resolved', 'rejected') and not vals.get('date_resolution'):
             vals = dict(vals, date_resolution=fields.Datetime.now())
         return super().write(vals)
-
-    # ── Quality-team decisions, pushed back to the owning backend ────────────
 
     def action_investigate(self):
         self.write({'state': 'investigation'})

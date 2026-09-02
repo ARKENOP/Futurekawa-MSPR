@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 class OpenApiExportTest extends AbstractIntegrationTest {
-
     @Test
     void generateOpenApiSpec() throws Exception {
         ResponseEntity<String> response = client.get()

@@ -11,7 +11,6 @@ import com.futurekawa.backendcentral.client.LocalBackendClient;
 
 @Component
 public class CountryRegistry {
-
     private final Map<String, LocalBackendDescriptor> descriptors = new ConcurrentHashMap<>();
     private final Map<String, LocalBackendClient> clients = new ConcurrentHashMap<>();
 

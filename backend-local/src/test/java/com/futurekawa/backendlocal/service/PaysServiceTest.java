@@ -23,7 +23,6 @@ import com.futurekawa.backendlocal.repository.PaysRepository;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class PaysServiceTest {
-
     @Mock private PaysRepository paysRepository;
     @Mock private PaysMapper paysMapper;
     @Mock private PaysProperties paysProperties;

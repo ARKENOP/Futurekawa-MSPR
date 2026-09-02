@@ -11,7 +11,6 @@ import org.springframework.web.client.RestClient;
 
 @Configuration
 public class RestClientConfig {
-
     @Bean
     public RestClient.Builder localBackendRestClientBuilder(ClientProperties clientProperties) {
         HttpClientSettings settings = HttpClientSettings.defaults()

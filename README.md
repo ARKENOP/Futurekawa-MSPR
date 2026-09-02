@@ -8,6 +8,7 @@ non-conformité dans l'ERP Odoo.
 - Vocabulaire métier de référence : [`docs/GLOSSAIRE.md`](docs/GLOSSAIRE.md)
 - Contrat d'API du siège : [`backend-central/api-contract.md`](backend-central/api-contract.md)
 - Stratégie et exécution des tests : [`docs/plan-de-tests.md`](docs/plan-de-tests.md)
+- Règles, seuils et notifications d'alerte : [`docs/alerting.md`](docs/alerting.md)
 
 ## Arborescence du projet
 
@@ -24,6 +25,7 @@ Futurekawa-MSPR/
 │   ├── GLOSSAIRE.md                 # vocabulaire métier imposé
 │   ├── ROADMAP.md                   # plan d'action et jalons
 │   ├── plan-de-tests.md             # typologie, jeux d'essai, exécution
+│   ├── alerting.md                  # règles, seuils, fréquence, contenu des e-mails
 │   ├── mini-pc-deploy.md            # déploiement de la démo (mini PC + NAS)
 │   ├── grille-evaluation.md         # grille du jury (source)
 │   └── sujet.md                     # cahier des charges (source)
@@ -78,7 +80,10 @@ Futurekawa-MSPR/
 │   ├── README.md                    # câblage, protocole, mise en service
 │   └── .env.example
 └── tests-e2e/
-    └── test_ui.py                   # recette d'interface (Selenium)
+    ├── conftest.py                  # page-object + fixtures Selenium
+    ├── pytest.ini                   # marqueurs et options par défaut
+    ├── test_ui.py                   # recette d'interface (31 scénarios)
+    └── run-tests.sh                 # build + serveur + recette, en une commande
 ```
 
 ## Lecture de l'arborescence
@@ -100,7 +105,8 @@ Futurekawa-MSPR/
 - `odoo/` contient le module ERP `futurekawa_quality` (fiches de non-conformité, workflow
   d'état, e-mail au service qualité sur alerte critique).
 - `iot/` contient le firmware Arduino Uno et le pont série → MQTT qui le relaie.
-- `tests-e2e/` porte la recette d'interface automatisée (Selenium).
+- `tests-e2e/` porte la recette d'interface automatisée (Selenium + pytest), jouée sur le
+  frontend construit avec les fixtures MSW.
 
 ## Démarrage rapide
 
@@ -111,7 +117,7 @@ JDK 25, Maven 3.9+, Docker avec Compose, Node 20+ et pnpm (ou npm) pour le front
 ### Construire et tester toute la chaîne Java
 
 ```bash
-mvn clean verify          # 3 modules, 68 tests, barrière de couverture JaCoCo à 80 %
+mvn clean verify          # 3 modules, 190 tests, barrière JaCoCo à 80 % sur les deux services
 ```
 
 ### Lancer un backend pays
@@ -155,10 +161,13 @@ backend central, donc le navigateur ne voit qu'une seule origine et CORS n'entre
 ### Lancer la recette d'interface
 
 ```bash
-cd tests-e2e
-pip install -r requirements.txt
-python test_ui.py         # nécessite chromedriver et le frontend démarré
+tests-e2e/run-tests.sh    # construit le frontend, le sert, joue 31 scénarios Selenium
 ```
+
+Le script se charge des dépendances et du serveur ; seul Chrome (ou Chromium) doit être
+installé, Selenium Manager récupère le pilote. La recette tourne sur les fixtures MSW, donc
+elle ne demande ni backend pays, ni base, ni broker. Contre un frontend déjà démarré :
+`E2E_BASE_URL=http://localhost:5173 pytest tests-e2e -v`.
 
 ## Ajouter un pays
 

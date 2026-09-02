@@ -8,12 +8,28 @@ function go(p: number): void {
 </script>
 
 <template>
-  <div class="pagination">
+  <div class="pagination" data-testid="pagination">
     <span class="count mono">{{ totalElements }} élément(s)</span>
     <div class="controls">
-      <button class="btn" :disabled="page === 0" @click="go(page - 1)">‹ Préc.</button>
-      <span class="mono page-ind">{{ page + 1 }} / {{ totalPages }}</span>
-      <button class="btn" :disabled="page >= totalPages - 1" @click="go(page + 1)">Suiv. ›</button>
+      <button
+        class="btn"
+        data-testid="pagination-prev"
+        :disabled="page === 0"
+        @click="go(page - 1)"
+      >
+        ‹ Préc.
+      </button>
+      <span class="mono page-ind" data-testid="pagination-indicator"
+        >{{ page + 1 }} / {{ totalPages }}</span
+      >
+      <button
+        class="btn"
+        data-testid="pagination-next"
+        :disabled="page >= totalPages - 1"
+        @click="go(page + 1)"
+      >
+        Suiv. ›
+      </button>
     </div>
   </div>
 </template>

@@ -28,20 +28,20 @@ export const pays: Record<string, Pays> = {
     id: 1,
     codePays: 'EC',
     nomPays: 'Équateur',
-    temperatureIdealeC: 24.0,
+    temperatureIdealeC: 31.0,
     humiditeIdealePourcent: 60.0,
-    toleranceTemperatureC: 2.5,
-    toleranceHumiditePourcent: 3.0,
+    toleranceTemperatureC: 3.0,
+    toleranceHumiditePourcent: 2.0,
     estActif: true,
   },
   CO: {
     id: 1,
     codePays: 'CO',
     nomPays: 'Colombie',
-    temperatureIdealeC: 21.0,
-    humiditeIdealePourcent: 58.0,
-    toleranceTemperatureC: 2.0,
-    toleranceHumiditePourcent: 2.5,
+    temperatureIdealeC: 26.0,
+    humiditeIdealePourcent: 80.0,
+    toleranceTemperatureC: 3.0,
+    toleranceHumiditePourcent: 2.0,
     estActif: true,
   },
 };
@@ -253,7 +253,7 @@ export const alertes: Record<string, Alerte[]> = {
       typeAlerte: 'CONDITION_NON_IDEALE',
       niveau: 'WARNING',
       statutAlerte: 'OUVERTE',
-      messageDescription: 'Humidité 66.0% (idéale 60.0 ± 3.0) — Bodega Central',
+      messageDescription: 'Humidité 66.0% (idéale 60.0 ± 2.0) — Bodega Central',
       dateHeureCreation: '2026-06-17T06:10:00',
       dateHeureCloture: null,
       entrepotId: 1,
@@ -275,7 +275,7 @@ export function generateMesures(
 ): MesureStockage[] {
   const p = pays[codePays];
   const now = Date.now();
-  const stepMs = 30 * 60 * 1000; // 30 min
+  const stepMs = 30 * 60 * 1000;
   const spike = codePays === 'BR' && entrepotId === 1;
 
   const out: MesureStockage[] = [];
@@ -285,9 +285,8 @@ export function generateMesures(
     let temp = p.temperatureIdealeC + Math.sin(phase) * (p.toleranceTemperatureC * 0.6);
     const hum = p.humiditeIdealePourcent + Math.cos(phase) * (p.toleranceHumiditePourcent * 0.7);
 
-    // Pic récent hors-tolérance pour la démo (dernières 3 mesures)
     if (spike && i < 3) {
-      temp = p.temperatureIdealeC + p.toleranceTemperatureC * 2.4; // > 2× tolérance
+      temp = p.temperatureIdealeC + p.toleranceTemperatureC * 2.4;
     }
 
     out.push({

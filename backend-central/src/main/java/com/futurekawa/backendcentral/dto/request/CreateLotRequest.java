@@ -28,7 +28,6 @@ public record CreateLotRequest(
         @NotNull(message = "entrepotId is required")
         Long entrepotId
 ) {
-    // codePays only routes the call; a backend-local serves one country and rejects it.
     public com.futurekawa.lib.dto.request.CreateLotRequest toLocalRequest() {
         return new com.futurekawa.lib.dto.request.CreateLotRequest(
                 referenceLot, dateEntreeStockage, dateRecolte, qualiteLot, exploitationId, entrepotId);

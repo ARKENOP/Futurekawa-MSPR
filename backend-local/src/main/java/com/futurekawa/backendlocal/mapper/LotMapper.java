@@ -14,7 +14,6 @@ import com.futurekawa.lib.dto.response.LotResponse;
 
 @Mapper
 public interface LotMapper {
-
     @Mapping(target = "paysId", source = "pays.id")
     @Mapping(target = "exploitationId", source = "exploitation.id")
     @Mapping(target = "entrepotId", source = "entrepot.id")

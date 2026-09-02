@@ -27,7 +27,6 @@ import com.futurekawa.lib.dto.response.EntrepotResponse;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class EntrepotServiceTest {
-
     @Mock private EntrepotRepository entrepotRepository;
     @Mock private PaysRepository paysRepository;
     @Mock private EntrepotMapper entrepotMapper;

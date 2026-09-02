@@ -46,7 +46,8 @@ async function load(): Promise<void> {
 const filtered = computed(() =>
   all.value
     .filter((l) => selected.value === 'ALL' || l.codePays === selected.value)
-    .filter((l) => !statutFilter.value || l.statutLot === statutFilter.value),
+    .filter((l) => !statutFilter.value || l.statutLot === statutFilter.value)
+    .sort((a, b) => a.dateEntreeStockage.localeCompare(b.dateEntreeStockage)),
 );
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / size)));
 const pageRows = computed(() => filtered.value.slice(page.value * size, page.value * size + size));
@@ -71,7 +72,6 @@ async function cycleStatut(lot: WithCountry<Lot>): Promise<void> {
   }
 }
 
-// ── Création ──
 const showCreate = ref(false);
 const exploitations = ref<WithCountry<Exploitation>[]>([]);
 const entrepots = ref<WithCountry<Entrepot>[]>([]);
@@ -163,19 +163,21 @@ async function submitCreate(): Promise<void> {
   <div class="toolbar">
     <div class="filters">
       <label class="eyebrow">Statut</label>
-      <select v-model="statutFilter" class="select">
+      <select v-model="statutFilter" class="select" data-testid="lot-statut-filter">
         <option value="">Tous</option>
         <option v-for="s in statuts" :key="s" :value="s">{{ s }}</option>
       </select>
     </div>
-    <button class="btn btn-primary" @click="openCreate">+ Nouveau lot</button>
+    <button class="btn btn-primary" data-testid="lot-create-open" @click="openCreate">
+      + Nouveau lot
+    </button>
   </div>
 
   <LoadingState v-if="loading" />
   <template v-else>
     <EmptyState v-if="!filtered.length" message="Aucun lot dans ce périmètre." />
     <div v-else class="card table-wrap">
-      <table>
+      <table data-testid="lots-table">
         <thead>
           <tr>
             <th>Référence</th>
@@ -189,7 +191,14 @@ async function submitCreate(): Promise<void> {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="l in pageRows" :key="`${l.codePays}-${l.id}`">
+          <tr
+            v-for="l in pageRows"
+            :key="`${l.codePays}-${l.id}`"
+            data-testid="lot-row"
+            :data-reference="l.referenceLot"
+            :data-pays="l.codePays"
+            :data-statut="l.statutLot"
+          >
             <td class="mono">{{ l.referenceLot }}</td>
             <td class="mono">{{ l.codePays }}</td>
             <td class="mono">{{ l.dateEntreeStockage }}</td>
@@ -198,7 +207,9 @@ async function submitCreate(): Promise<void> {
             <td class="mono">{{ l.ancienneteJours != null ? `${l.ancienneteJours} j` : '—' }}</td>
             <td><StatusBadge :value="l.statutLot" /></td>
             <td>
-              <button class="btn small" @click="cycleStatut(l)">Changer statut</button>
+              <button class="btn small" data-testid="lot-cycle-statut" @click="cycleStatut(l)">
+                Changer statut
+              </button>
             </td>
           </tr>
         </tbody>
@@ -215,21 +226,27 @@ async function submitCreate(): Promise<void> {
     <form class="form" @submit.prevent="submitCreate">
       <label
         >Pays
-        <select v-model="form.codePays">
+        <select v-model="form.codePays" data-testid="lot-form-pays">
           <option v-for="p in country.pays" :key="p.codePays" :value="p.codePays">
             {{ p.nomPays }}
           </option>
         </select>
       </label>
-      <label>Référence<input v-model="form.referenceLot" required /></label>
       <label
-        >Date entrée stockage<input v-model="form.dateEntreeStockage" type="date" required
+        >Référence<input v-model="form.referenceLot" data-testid="lot-form-reference" required
+      /></label>
+      <label
+        >Date entrée stockage<input
+          v-model="form.dateEntreeStockage"
+          type="date"
+          data-testid="lot-form-date"
+          required
       /></label>
       <label>Date récolte<input v-model="form.dateRecolte" type="date" /></label>
       <label>Qualité<input v-model="form.qualiteLot" /></label>
       <label
         >Exploitation
-        <select v-model.number="form.exploitationId">
+        <select v-model.number="form.exploitationId" data-testid="lot-form-exploitation">
           <option v-for="e in exploitationsDuPays" :key="e.id" :value="e.id">
             {{ e.nomExploitation }}
           </option>
@@ -237,7 +254,7 @@ async function submitCreate(): Promise<void> {
       </label>
       <label
         >Entrepôt
-        <select v-model.number="form.entrepotId">
+        <select v-model.number="form.entrepotId" data-testid="lot-form-entrepot">
           <option v-for="e in entrepotsDeLExploitation" :key="e.id" :value="e.id">
             {{ e.nomEntrepot }}
           </option>
@@ -248,8 +265,15 @@ async function submitCreate(): Promise<void> {
       </p>
     </form>
     <template #footer>
-      <button class="btn" @click="showCreate = false">Annuler</button>
-      <button class="btn btn-primary" :disabled="!createValide || creating" @click="submitCreate">
+      <button class="btn" data-testid="lot-create-cancel" @click="showCreate = false">
+        Annuler
+      </button>
+      <button
+        class="btn btn-primary"
+        data-testid="lot-create-submit"
+        :disabled="!createValide || creating"
+        @click="submitCreate"
+      >
         {{ creating ? 'Création…' : 'Créer' }}
       </button>
     </template>

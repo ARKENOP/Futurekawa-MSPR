@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/entrepots/{codePays}/{id}/mesures")
 @RequiredArgsConstructor
 public class MesureController {
-
     private final MesureAggregationService mesureAggregationService;
 
     @GetMapping

@@ -25,11 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class CountryFanoutExecutor {
-
     private final CountryRegistry countryRegistry;
     private final CountryCircuitBreakers circuitBreakers;
 
-    // Name matches the bean in AsyncConfig: renaming it changes the injection.
     private final ExecutorService fanoutTaskExecutor;
 
     public <T> FanoutResult<T> execute(Function<LocalBackendClient, T> call) {
@@ -61,9 +59,8 @@ public class CountryFanoutExecutor {
             T data = circuitBreaker.executeSupplier(() -> call.apply(client));
             return Optional.of(new CountrySuccess<>(codePays, descriptor.nomPays(), data));
         } catch (HttpClientErrorException e) {
-            // The country answered, it just rejected this request. Reporting it as
-            // "unavailable" would hide a healthy backend, so log loudly and move on.
-            log.warn("Backend local for {} rejected the request ({}); country reported empty",
+            log.warn("Backend local for {} rejected the request ({}); "
+                            + "country reported as unavailable for this call",
                     codePays, e.getStatusCode());
             return Optional.empty();
         } catch (Exception e) {

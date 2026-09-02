@@ -8,7 +8,6 @@ import com.futurekawa.lib.dto.response.AlerteResponse;
 
 @Mapper
 public interface AlerteMapper {
-
     @Mapping(target = "entrepotId", source = "entrepot.id")
     @Mapping(target = "lotId", source = "lotConcerne.id")
     @Mapping(target = "paysId", source = "entrepot.pays.id")

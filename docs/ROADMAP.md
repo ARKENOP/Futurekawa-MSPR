@@ -200,16 +200,16 @@ Critère de réussite:
 | 7. Documentation utilisateur | Guide métier, FAQ, lecture des alertes et courbes | Documentation utilisateur |
 | 8. Conduite du changement | Questionnaire phase 2, schéma d’automatisation, supports de communication | Dossier de changement |
 
-## 4 bis. Avancement au 27/08/2026
+## 4 bis. Avancement au 02/09/2026
 
 | Phase | État | Commentaire |
 | --- | --- | --- |
 | 0 — Cadrage fonctionnel | Fait | Vocabulaire figé dans `GLOSSAIRE.md`, statuts canoniques implémentés comme enums partagées. |
 | 1 — Architecture et socle | Fait | `docs/ARCHITECTURE.md` : schéma de l’implémentation réelle + argumentaire stabilité / efficacité / pérennité. |
-| 2 — Backend local pays | Fait | Ingestion MQTT → PostgreSQL → alertes → fiche Odoo, conteneurisé, 68 tests. Restes: tri FIFO par défaut et filtres serveur (voir `ARCHITECTURE.md` §7). |
-| 3 — Frontend siège + backend central | Fait, à éprouver | Fan-out avec circuit breaker par pays, frontend Vue 3 branché sur le central. Jamais encore exécuté avec plusieurs pays simultanés. |
+| 2 — Backend local pays | Fait | Ingestion MQTT → PostgreSQL → alertes → fiche Odoo, conteneurisé, 86 tests. Tri FIFO et filtres serveur en place. Le backend déclenche l'alerte ; les destinataires et le contenu de l'e-mail sont gérés dans Odoo — voir `alerting.md`. |
+| 3 — Frontend siège + backend central | Fait et éprouvé | Fan-out avec circuit breaker par pays, frontend Vue 3 branché sur le central. **Exécuté avec deux pays simultanés** (Brésil + Équateur) sur le poste de démonstration, dégradation d'un pays comprise (`X-Unavailable-Countries` + bandeau). |
 | 4 — Module IoT | Fait | Arduino Uno + DHT22 + pont série → MQTT, démontré de bout en bout. |
-| 5 — Tests et intégration continue | Partiel | `mvn verify` : 68 tests + barrière de couverture 80 %, CI GitHub Actions complète. Manquent les tests du backend central et une recette Selenium réellement assertive (voir `plan-de-tests.md` §5). |
+| 5 — Tests et intégration continue | Fait | `mvn verify` : 190 tests + barrière 80 % sur les deux services ; recette Selenium de 31 scénarios assertifs, jouée en CI (job `recette-ui`). Restent les tests de composant frontend et un test Odoo (voir `plan-de-tests.md` §6). |
 | 6 — Documentation et conduite du changement | Partiel | Architecture, tests, déploiement et contrat d’API à jour. Restent la documentation utilisateur, le dossier technique, le plan de conduite du changement et le support de soutenance. |
 
 ## 5. Jalons de validation

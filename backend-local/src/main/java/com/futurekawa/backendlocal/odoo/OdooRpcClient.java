@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class OdooRpcClient {
-
     private final RestClient restClient;
     private final OdooProperties odooProperties;
     private Integer cachedUid = null;

@@ -75,13 +75,13 @@ onMounted(load);
   <template v-else-if="entrepot && pays">
     <header class="head">
       <div>
-        <h2>{{ entrepot.nomEntrepot }}</h2>
+        <h2 data-testid="entrepot-nom">{{ entrepot.nomEntrepot }}</h2>
         <span class="eyebrow">{{ entrepot.localisation }} · {{ codePays }}</span>
       </div>
       <span class="cap mono">Capacité {{ entrepot.capaciteMax ?? '—' }}</span>
     </header>
 
-    <section class="gauges card">
+    <section class="gauges card" data-testid="entrepot-gauges">
       <RoastGauge
         v-if="latest"
         label="Température"
@@ -110,7 +110,12 @@ onMounted(load);
         <h3 class="block-title">Lots stockés</h3>
         <EmptyState v-if="!lots.length" message="Aucun lot." />
         <ul v-else class="lots">
-          <li v-for="l in lots" :key="l.id">
+          <li
+            v-for="l in lots"
+            :key="l.id"
+            data-testid="entrepot-lot"
+            :data-reference="l.referenceLot"
+          >
             <span class="mono">{{ l.referenceLot }}</span>
             <StatusBadge :value="l.statutLot" />
           </li>

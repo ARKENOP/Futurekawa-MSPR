@@ -71,7 +71,6 @@ async function chargerDonnees(): Promise<void> {
   );
   latest.value = Object.fromEntries(entries);
 
-  // Entrepôt focalisé pour la courbe : le premier du périmètre.
   const focus = entrepots.value[0];
   if (focus) {
     focusLabel.value = `${focus.nomEntrepot} (${focus.codePays})`;
@@ -130,6 +129,8 @@ watch(selected, load);
             v-for="e in entrepots"
             :key="`${e.codePays}-${e.id}`"
             class="gauge-card"
+            data-testid="gauge-card"
+            :data-entrepot="`${e.codePays}-${e.id}`"
             role="button"
             tabindex="0"
             @click="openEntrepot(e)"

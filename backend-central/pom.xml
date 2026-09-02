@@ -135,13 +135,23 @@
                 </configuration>
             </plugin>
 
-            <!-- JaCoCo — coverage measurement, same plugin/version as backend-local.
-                 The `check` gate is deliberately NOT bound yet: this module has no
-                 test suite, so a threshold would only break the build. Add the same
-                 80% BUNDLE LINE rule as backend-local once tests exist. -->
+            <!-- JaCoCo — same plugin, exclusions and 80% BUNDLE LINE gate as
+                 backend-local, so `mvn verify` enforces coverage on both services. -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Classes with no meaningful branch/line logic to test:
+                         the boot entry point, framework wiring, and immutable
+                         @ConfigurationProperties records. -->
+                    <excludes>
+                        <exclude>**/BackendCentralApplication.class</exclude>
+                        <exclude>**/config/OpenApiConfig.class</exclude>
+                        <exclude>**/config/RestClientConfig.class</exclude>
+                        <exclude>**/config/AsyncConfig.class</exclude>
+                        <exclude>**/config/*Properties.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -155,6 +165,27 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

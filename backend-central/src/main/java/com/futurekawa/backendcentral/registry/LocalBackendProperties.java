@@ -23,7 +23,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "futurekawa")
 public record LocalBackendProperties(List<String> locals) {
-
     public record Entry(String codePays, String url) {
     }
 

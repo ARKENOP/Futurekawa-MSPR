@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class CountryDiscoveryScheduler implements ApplicationRunner {
-
     private final CountryRegistry countryRegistry;
 
     @Override

@@ -16,6 +16,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -34,7 +35,6 @@ import com.futurekawa.lib.enums.NiveauAlerte;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class MesureServiceTest {
-
     @Mock private MesureStockageRepository mesureRepository;
     @Mock private EntrepotRepository entrepotRepository;
     @Mock private MesureStockageMapper mesureMapper;
@@ -157,5 +157,36 @@ class MesureServiceTest {
         when(mesureMapper.toResponse(mesure)).thenReturn(response);
 
         assertThat(service.getLatestByEntrepot(1L)).isSameAs(response);
+    }
+
+    @Test
+    void wordsACriticalAlertInFrenchQuotingBothIdeals() {
+        entrepot.setNomEntrepot("Entrepôt Nord A");
+        stubPersist("38.0", "55.0");
+
+        service.saveMesure(1L, payload("38.0", "55.0"));
+
+        ArgumentCaptor<String> description = ArgumentCaptor.forClass(String.class);
+        verify(alerteService).createConditionAlerte(any(), any(),
+                eq(NiveauAlerte.CRITIQUE), description.capture());
+        assertThat(description.getValue())
+                .startsWith("Conditions critiques dans Entrepôt Nord A :")
+                .contains("température 38,0 °C (idéale 29,0 °C)")
+                .contains("humidité 55,0 % (idéale 55,0 %)");
+    }
+
+    @Test
+    void wordsAWarningAlertInFrenchQuotingBothIdeals() {
+        entrepot.setNomEntrepot("Entrepôt Sud A");
+        stubPersist("33.0", "55.0");
+
+        service.saveMesure(1L, payload("33.0", "55.0"));
+
+        ArgumentCaptor<String> description = ArgumentCaptor.forClass(String.class);
+        verify(alerteService).createConditionAlerte(any(), any(),
+                eq(NiveauAlerte.WARNING), description.capture());
+        assertThat(description.getValue())
+                .startsWith("Conditions hors tolérance dans Entrepôt Sud A :")
+                .contains("(idéale 29,0 °C)");
     }
 }

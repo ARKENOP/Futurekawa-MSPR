@@ -12,7 +12,15 @@ function fmt(dt: string): string {
 </script>
 
 <template>
-  <article class="item" :style="{ '--lvl': `var(--niveau-${alerte.niveau.toLowerCase()})` }">
+  <article
+    class="item"
+    data-testid="alert-item"
+    :data-pays="alerte.codePays"
+    :data-niveau="alerte.niveau"
+    :data-statut="alerte.statutAlerte"
+    :data-type="alerte.typeAlerte"
+    :style="{ '--lvl': `var(--niveau-${alerte.niveau.toLowerCase()})` }"
+  >
     <div class="top">
       <StatusBadge :value="alerte.niveau" />
       <span class="pays mono">{{ alerte.codePays }}</span>
@@ -25,6 +33,7 @@ function fmt(dt: string): string {
       <button
         v-if="closable && alerte.statutAlerte !== 'CLOTUREE'"
         class="btn close-btn"
+        data-testid="alert-close"
         @click="$emit('close', alerte)"
       >
         Clôturer

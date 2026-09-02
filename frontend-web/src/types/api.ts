@@ -1,24 +1,14 @@
-// ============================================================
-// FutureKawa — Types de l'API du backend central (consolidé)
-// Source de vérité : DTO des backends locaux (Spring Boot)
-// Réponses groupées par pays + pagination Spring Page<T>
-// ============================================================
-
-// ---------- Enums (UPPERCASE, .name() Jackson) ----------
-
 export type StatutLot = 'CONFORME' | 'EN_ALERTE' | 'PERIME';
 export type StatutAlerte = 'OUVERTE' | 'NOTIFIEE' | 'CLOTUREE';
 export type NiveauAlerte = 'INFO' | 'WARNING' | 'CRITIQUE';
 export type TypeAlerte = 'CONDITION_NON_IDEALE' | 'LOT_TROP_ANCIEN';
-
-// ---------- Enveloppes génériques ----------
 
 /** Miroir de l'objet Page<T> de Spring Data. */
 export interface Page<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
-  number: number; // index de page (0-based)
+  number: number;
   size: number;
   numberOfElements: number;
   first: boolean;
@@ -29,8 +19,8 @@ export interface Page<T> {
 
 /** Groupe une liste simple (non paginée) par pays d'origine. */
 export interface CountryGroup<T> {
-  codePays: string; // code déclaré par le backend du pays, ex. "BR"
-  nomPays: string; // "Brésil", "Équateur", "Colombie"
+  codePays: string;
+  nomPays: string;
   data: T[];
 }
 
@@ -40,8 +30,6 @@ export interface CountryPageGroup<T> {
   nomPays: string;
   page: Page<T>;
 }
-
-// ---------- Ressources (miroir des *Response locaux) ----------
 
 export interface Pays {
   id: number;
@@ -69,7 +57,7 @@ export interface Entrepot {
   nomEntrepot: string;
   localisation: string | null;
   capaciteMax: number | null;
-  statutEntrepot: string; // ex. "actif"
+  statutEntrepot: string;
   exploitationId: number;
   paysId: number;
 }
@@ -77,20 +65,20 @@ export interface Entrepot {
 export interface Lot {
   id: number;
   referenceLot: string;
-  dateEntreeStockage: string; // ISO date
-  dateRecolte: string | null; // ISO date
+  dateEntreeStockage: string;
+  dateRecolte: string | null;
   statutLot: StatutLot;
   qualiteLot: string | null;
   exploitationId: number;
   entrepotId: number;
   paysId: number;
-  ancienneteJours: number; // calculé côté backend
+  ancienneteJours: number;
 }
 
 export interface MesureStockage {
   id: number;
   idCapteur: string;
-  dateHeureMesure: string; // ISO date-time
+  dateHeureMesure: string;
   temperatureC: number;
   humiditePourcent: number;
   entrepotId: number;
@@ -103,29 +91,24 @@ export interface Alerte {
   niveau: NiveauAlerte;
   statutAlerte: StatutAlerte;
   messageDescription: string;
-  dateHeureCreation: string; // ISO date-time
-  dateHeureCloture: string | null; // null si ouverte
+  dateHeureCreation: string;
+  dateHeureCloture: string | null;
   entrepotId: number;
   lotId: number | null;
   paysId: number;
 }
 
-// ---------- Types de réponse par endpoint (consolidé) ----------
-
-export type PaysListResponse = Pays[]; // GET /api/v1/pays
-export type ExploitationsResponse = CountryGroup<Exploitation>[]; // GET /api/v1/exploitations
-export type EntrepotsResponse = CountryGroup<Entrepot>[]; // GET /api/v1/entrepots
-export type LotsResponse = CountryPageGroup<Lot>[]; // GET /api/v1/lots
-export type AlertesResponse = CountryPageGroup<Alerte>[]; // GET /api/v1/alertes
-export type MesuresResponse = Page<MesureStockage>; // GET /entrepots/{codePays}/{id}/mesures
-// Unitaires : Lot | Alerte | Entrepot | MesureStockage (GET .../{id}, .../latest)
-
-// ---------- Corps de requête (écritures relayées au local) ----------
+export type PaysListResponse = Pays[];
+export type ExploitationsResponse = CountryGroup<Exploitation>[];
+export type EntrepotsResponse = CountryGroup<Entrepot>[];
+export type LotsResponse = CountryPageGroup<Lot>[];
+export type AlertesResponse = CountryPageGroup<Alerte>[];
+export type MesuresResponse = Page<MesureStockage>;
 
 export interface CreateLotRequest {
   referenceLot: string;
-  dateEntreeStockage: string; // ISO date
-  dateRecolte?: string | null; // ISO date
+  dateEntreeStockage: string;
+  dateRecolte?: string | null;
   qualiteLot?: string | null;
   exploitationId: number;
   entrepotId: number;

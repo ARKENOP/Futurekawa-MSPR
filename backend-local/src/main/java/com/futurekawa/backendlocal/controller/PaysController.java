@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/pays")
 @RequiredArgsConstructor
 public class PaysController {
-
     private final PaysService paysService;
 
     @GetMapping

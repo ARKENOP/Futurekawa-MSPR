@@ -4,15 +4,12 @@ import { computed } from 'vue';
 const props = defineProps<{ value: string }>();
 
 const colorMap: Record<string, string> = {
-  // StatutLot
   CONFORME: 'var(--statut-conforme)',
   EN_ALERTE: 'var(--statut-en-alerte)',
   PERIME: 'var(--statut-perime)',
-  // NiveauAlerte
   INFO: 'var(--niveau-info)',
   WARNING: 'var(--niveau-warning)',
   CRITIQUE: 'var(--niveau-critique)',
-  // StatutAlerte
   OUVERTE: 'var(--cherry)',
   NOTIFIEE: 'var(--roast-cinnamon)',
   CLOTUREE: 'var(--text-muted)',
@@ -23,7 +20,7 @@ const labels: Record<string, string> = {
   EN_ALERTE: 'En alerte',
   PERIME: 'Périmé',
   INFO: 'Info',
-  WARNING: 'Warning',
+  WARNING: 'Avertissement',
   CRITIQUE: 'Critique',
   OUVERTE: 'Ouverte',
   NOTIFIEE: 'Notifiée',
@@ -37,7 +34,7 @@ const label = computed(() => labels[props.value] ?? props.value);
 </script>
 
 <template>
-  <span class="badge" :style="{ '--c': color }">
+  <span class="badge" data-testid="status-badge" :data-value="value" :style="{ '--c': color }">
     <span class="badge-dot" />
     {{ label }}
   </span>

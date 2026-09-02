@@ -16,7 +16,6 @@ http.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Journalisation centralisée ; les vues gèrent l'affichage local.
     console.error('[http]', error?.response?.status, error?.config?.url, error?.message);
     return Promise.reject(error);
   },

@@ -13,7 +13,6 @@ import com.futurekawa.backendlocal.model.MesureStockage;
 
 @Repository
 public interface MesureStockageRepository extends JpaRepository<MesureStockage, Long> {
-
     @EntityGraph(attributePaths = {"entrepot", "lot"})
     Page<MesureStockage> findByEntrepotIdOrderByDateHeureMesureDesc(Long entrepotId, Pageable pageable);
 
