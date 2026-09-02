@@ -1,0 +1,7 @@
+# Le bundle est construit dans l'image : rien de prébuild ni de local ici.
+node_modules
+dist
+.env
+.env.*
+!.env.example
+.git

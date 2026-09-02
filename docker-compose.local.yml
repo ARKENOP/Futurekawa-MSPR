@@ -1,0 +1,81 @@
+# Stack pays : mosquitto + backend-local + postgres. Une par pays.
+# Lancement : docker compose --env-file .env.local -f docker-compose.local.yml up -d --build
+# --env-file est obligatoire : le fichier sert à l'interpolation ci-dessous et
+# d'environnement pour backend-local.
+# Odoo n'est pas ici : il vit dans la stack siège, joint via ODOO_URL.
+# Le pont série (iot/serial-bridge) tourne sur l'hôte : il lui faut le port USB.
+
+name: futurekawa-local
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: futurekawa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-futurekawa}
+      POSTGRES_USER: ${POSTGRES_USER:-futurekawa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env.local}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # Non publié : la base n'est jointe que par le réseau Compose.
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-futurekawa} -d ${POSTGRES_DB:-futurekawa}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: futurekawa-mosquitto
+    restart: unless-stopped
+    # Publié : le pont série de l'entrepôt y publie ses mesures.
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./backend-local/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -p 1883 -t '$$SYS/#' -C 1 -W 3 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+  backend-local:
+    build:
+      # Contexte = racine du dépôt : l'image compile aussi futurekawa-lib.
+      context: .
+      dockerfile: backend-local/Dockerfile.prod
+    image: futurekawa/backend-local:latest
+    container_name: futurekawa-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    env_file:
+      - .env.local
+    environment:
+      # Câblage réseau Docker, identique pour tous les pays : prime sur .env.local.
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+    # Publié : le siège interroge GET /api/v1/**.
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
+volumes:
+  postgres-data:
+  mosquitto-data:
+  mosquitto-log:

@@ -27,7 +27,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
-!.env.prod.example
+!.env.*.example
 *.local
 
 # Dependency directories
