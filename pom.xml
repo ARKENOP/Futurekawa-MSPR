@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ── Spring Boot Parent ─────────────────────────────────────────────── -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.6</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <!-- ── Project Coordinates ────────────────────────────────────────────── -->
+    <groupId>com.futurekawa</groupId>
+    <artifactId>futurekawa-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>FutureKawa Parent</name>
+    <description>
+        Aggregator and shared build configuration for the FutureKawa Java services:
+        the API contract library, the per-country local backend, and the central
+        headquarters backend.
+    </description>
+
+    <!-- ── Modules ────────────────────────────────────────────────────────── -->
+    <modules>
+        <module>futurekawa-lib</module>
+        <module>backend-local</module>
+        <module>backend-central</module>
+    </modules>
+
+    <!-- ── Properties shared by every module ──────────────────────────────── -->
+    <properties>
+        <java.version>25</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <springdoc.version>2.8.5</springdoc.version>
+        <jacoco.version>0.8.13</jacoco.version>
+    </properties>
+
+    <!-- ── Version management for the in-house modules ────────────────────── -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.futurekawa</groupId>
+                <artifactId>futurekawa-lib</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ── Build conventions ──────────────────────────────────────────────────
+         pluginManagement only: the plugins are activated per module, so the
+         plain-jar futurekawa-lib is never handed to spring-boot:repackage.
+    -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Spring Boot Maven Plugin — same fat-jar rules for both services -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+
+                <!-- JaCoCo — coverage measurement. Each service decides whether to
+                     bind the `check` gate (backend-local does, at 80% BUNDLE LINE). -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>

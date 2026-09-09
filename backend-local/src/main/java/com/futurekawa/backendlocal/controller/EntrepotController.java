@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.futurekawa.backendlocal.dto.response.EntrepotResponse;
 import com.futurekawa.backendlocal.service.EntrepotService;
+import com.futurekawa.lib.dto.response.EntrepotResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/entrepots")
 @RequiredArgsConstructor
 public class EntrepotController {
-
     private final EntrepotService entrepotService;
 
     @GetMapping

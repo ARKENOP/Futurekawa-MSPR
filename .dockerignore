@@ -1,0 +1,31 @@
+# The Java images build from the repository root (they need futurekawa-lib), so
+# keep everything irrelevant out of the build context.
+
+.git
+.github
+.idea
+.vscode
+.claude
+
+# Build output — the images compile from source inside the builder stage.
+**/target
+**/dist
+**/node_modules
+
+# Docs, frontend and IoT sources are not part of a backend image.
+docs
+odoo
+iot
+frontend-web
+tests-e2e
+**/*.md
+
+# Never ship secrets or local env files.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local runtime data
+**/postgres-data
+**/mosquitto-data
+**/mosquitto-log

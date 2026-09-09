@@ -56,7 +56,7 @@ Actions:
 
 - documenter l’architecture pays + siège en s’appuyant sur le schéma existant;
 - justifier le découpage entre backend local et backend central;
-- préciser les flux d’échange: MQTT pour les mesures, REST pour les consultations et la consolidation, SMTP pour les notifications;
+- préciser les flux d’échange: MQTT pour les mesures, REST pour les consultations et la consolidation, JSON-RPC vers Odoo pour les fiches de non-conformité (l’e-mail est émis par Odoo, il n’y a pas de SMTP applicatif);
 - définir les principes de robustesse: conteneurisation, séparation des responsabilités, tolérance aux pannes, circuit breaker côté siège, historisation en base SQL;
 - cadrer la structure de déploiement Docker Compose pour le pays et pour le siège.
 
@@ -148,14 +148,14 @@ Actions:
 - rédiger le plan de test en distinguant tests unitaires, d’intégration, API, UI et bout en bout;
 - définir les jeux de données, les résultats attendus et les critères de succès;
 - mettre en place des tests automatisés sur le backend et le frontend;
-- intégrer un pipeline CI/CD Jenkins pour lancer build, tests et packaging;
+- intégrer un pipeline CI/CD pour lancer build, tests et packaging (retenu: **GitHub Actions**, la grille laissant le choix de l’outil);
 - produire des artefacts exploitables pour la démo.
 
 Livrables attendus:
 
 - plan de test détaillé;
 - exécution des tests manuels et automatisés;
-- Jenkinsfile ou configuration Jenkins documentée;
+- configuration de pipeline documentée (`.github/workflows/ci.yml`);
 - preuve d’exécution de la CI.
 
 Critère de réussite:
@@ -196,9 +196,21 @@ Critère de réussite:
 | 3. Développement d’une application adaptée | Backend local, backend central, frontend, intégration loT | Code source et démo |
 | 4. Progiciel intégré | Hors périmètre principal, à mentionner comme non retenu dans le cadrage | Note de positionnement |
 | 5. Tests | Plan de test, tests automatisés et manuels, jeux d’essai | Dossier de tests |
-| 6. Intégration continue | Pipeline Jenkins, build, tests, packaging | Jenkinsfile et preuve d’exécution |
+| 6. Intégration continue | Pipeline GitHub Actions, build, tests, packaging | `.github/workflows/ci.yml` et preuve d’exécution |
 | 7. Documentation utilisateur | Guide métier, FAQ, lecture des alertes et courbes | Documentation utilisateur |
 | 8. Conduite du changement | Questionnaire phase 2, schéma d’automatisation, supports de communication | Dossier de changement |
+
+## 4 bis. Avancement au 02/09/2026
+
+| Phase | État | Commentaire |
+| --- | --- | --- |
+| 0 — Cadrage fonctionnel | Fait | Vocabulaire figé dans `GLOSSAIRE.md`, statuts canoniques implémentés comme enums partagées. |
+| 1 — Architecture et socle | Fait | `docs/ARCHITECTURE.md` : schéma de l’implémentation réelle + argumentaire stabilité / efficacité / pérennité. |
+| 2 — Backend local pays | Fait | Ingestion MQTT → PostgreSQL → alertes → fiche Odoo, conteneurisé, 86 tests. Tri FIFO et filtres serveur en place. Le backend déclenche l'alerte ; les destinataires et le contenu de l'e-mail sont gérés dans Odoo — voir `alerting.md`. |
+| 3 — Frontend siège + backend central | Fait et éprouvé | Fan-out avec circuit breaker par pays, frontend Vue 3 branché sur le central. **Exécuté avec deux pays simultanés** (Brésil + Équateur) sur le poste de démonstration, dégradation d'un pays comprise (`X-Unavailable-Countries` + bandeau). |
+| 4 — Module IoT | Fait | Arduino Uno + DHT22 + pont série → MQTT, démontré de bout en bout. |
+| 5 — Tests et intégration continue | Fait | `mvn verify` : 190 tests + barrière 80 % sur les deux services ; recette Selenium de 31 scénarios assertifs, jouée en CI (job `recette-ui`). Restent les tests de composant frontend et un test Odoo (voir `plan-de-tests.md` §6). |
+| 6 — Documentation et conduite du changement | Partiel | Architecture, tests, déploiement et contrat d’API à jour. Restent la documentation utilisateur, le dossier technique, le plan de conduite du changement et le support de soutenance. |
 
 ## 5. Jalons de validation
 

@@ -15,9 +15,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
-import com.futurekawa.backendlocal.model.enums.StatutAlerte;
-import com.futurekawa.backendlocal.model.enums.TypeAlerte;
+import com.futurekawa.lib.enums.NiveauAlerte;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.TypeAlerte;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,7 +29,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class Alerte implements Serializable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_alerte")

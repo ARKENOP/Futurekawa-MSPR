@@ -1,6 +1,7 @@
 package com.futurekawa.backendlocal.config;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -16,8 +17,8 @@ import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "futurekawa.mqtt", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MqttConfig {
-
     private final MqttProperties mqttProperties;
 
     @Bean
@@ -25,7 +26,7 @@ public class MqttConfig {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
         options.setServerURIs(new String[]{mqttProperties.brokerUrl()});
-        // Automatic reconnect and clean session are good defaults for IoT ingestion
+
         options.setAutomaticReconnect(true);
         options.setCleanSession(true);
         factory.setConnectionOptions(options);

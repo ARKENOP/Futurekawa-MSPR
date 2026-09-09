@@ -254,7 +254,7 @@ Le payload de mesure est le contenu fonctionnel publié dans le message MQTT.
 | Conteneur | Unité d’exécution isolée utilisée pour déployer une brique du système. |
 | Docker Compose | Mécanisme d’orchestration local des conteneurs du prototype. |
 | CI/CD | Chaîne d’intégration et de livraison continue automatisant les vérifications, les tests et le packaging. |
-| Jenkins | Outil d’intégration continue retenu pour automatiser les pipelines. |
+| GitHub Actions | Outil d’intégration continue retenu pour automatiser build, tests et packaging (`.github/workflows/ci.yml`). |
 | Documentation utilisateur | Documentation orientée métier expliquant l’usage de l’application. |
 | Documentation technique | Documentation destinée à expliciter l’architecture, les choix techniques et les tests. |
 

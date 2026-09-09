@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Notification sent for EVERY alert ticket created (no severity threshold):
+        the cahier des charges asks for a mail both when storage conditions leave the
+        country's acceptable range and when a lot exceeds its maximum storage
+        duration.
+
+        Recipients are managed in Odoo, never in source: they are resolved at send
+        time from the Contacts tagged "Responsable Qualite FutureKawa" and passed as
+        recipient_ids by quality_alert._notify_quality_team. Tag or untag a contact
+        in the Contacts app to change the list. email_to stays empty, which also
+        clears any address a previous module version may have stored.
+    -->
+    <record id="mail_template_quality_alert" model="mail.template">
+        <field name="name">Alerte Qualite FutureKawa</field>
+        <field name="model_id" ref="futurekawa_quality.model_futurekawa_quality_alert"/>
+        <field name="email_from">herciualin10@gmail.com</field>
+        <field name="email_to"></field>
+        <field name="auto_delete" eval="False"/>
+        <field name="subject">[FutureKawa] Alerte {{ object.niveau }} - {{ object.entrepot_nom }} ({{ object.name }})</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, Helvetica, sans-serif; color: #333;">
+                <p>Bonjour,</p>
+                <p>Une <strong>alerte qualite</strong> vient d'etre enregistree sur la plateforme FutureKawa.</p>
+                <table style="border-collapse: collapse; margin: 12px 0;">
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Reference</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.name or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Entrepot</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.entrepot_nom or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Pays</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.pays_id.display_name or object.pays_code or '-'"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Niveau</td>
+                        <td style="padding: 4px 12px; color: #c0392b; font-weight: bold;"><t t-out="object.niveau or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Type</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.type_anomaly or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Lot concerne</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.lot_reference or '-'"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold;">Date de detection</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.date_creation or ''"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 12px; font-weight: bold; vertical-align: top;">Description</td>
+                        <td style="padding: 4px 12px;"><t t-out="object.message_description or ''"/></td>
+                    </tr>
+                </table>
+
+                <p style="font-weight: bold; margin-bottom: 4px;">Action attendue</p>
+                <t t-if="object.type_anomaly == 'condition_non_ideale'">
+                    <ol style="margin-top: 0;">
+                        <li>Verifier sur place les conditions de l'entrepot (aeration, etancheite, capteur).</li>
+                        <li>Consulter l'historique des courbes dans l'interface de supervision pour situer le debut de la derive.</li>
+                        <li>Corriger la cause, puis passer la fiche en <em>En cours d'analyse</em> et la resoudre une fois les conditions revenues dans la plage.</li>
+                    </ol>
+                </t>
+                <t t-if="object.type_anomaly == 'lot_trop_ancien'">
+                    <ol style="margin-top: 0;">
+                        <li>Prioriser l'expedition de ce lot (rotation FIFO) ou decider de son declassement.</li>
+                        <li>Controler sa qualite avant expedition.</li>
+                        <li>Resoudre la fiche apres expedition, ou la <em>Declasser</em> si le lot est perdu.</li>
+                    </ol>
+                </t>
+
+                <p>
+                    La fiche est consultable dans Odoo :
+                    <strong>FutureKawa Quality &gt; Alertes</strong>. Tant qu'elle reste
+                    ouverte, le backend du pays n'emettra pas de nouvelle alerte pour cet
+                    entrepot : la traiter est necessaire pour reactiver la surveillance.
+                </p>
+                <p style="color: #888; font-size: 12px;">Message automatique - ne pas repondre.</p>
+            </div>
+        </field>
+    </record>
+</odoo>

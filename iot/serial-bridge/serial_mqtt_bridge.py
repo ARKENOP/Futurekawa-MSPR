@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 FutureKawa — Arduino Uno serial -> MQTT bridge.
 
@@ -14,6 +13,15 @@ Topic:    futurekawa/{country}/entrepot/{entrepot_id}/mesures
 Payload:  {"id_capteur": "...", "temperature_c": 27.70,
            "humidite_pourcent": 46.40, "timestamp": 1718373120000}
 
+--country and --entrepot-id are mandatory and have no defaults on purpose. They
+are the only thing binding a physical sensor to a warehouse: the backend reads the
+warehouse from the topic, never from the payload. With defaults, a second bridge
+started without them would publish its warehouse's readings under the first one's
+id -- silently, since nothing downstream can tell them apart. That corrupts the
+storage history the client relies on, and the alert deduplication then hides the
+real warehouse's drift, because an alert is already open on the one being written
+to.
+
 Usage:
     pip install pyserial paho-mqtt
     python serial_mqtt_bridge.py \
@@ -26,9 +34,8 @@ import json
 import sys
 import time
 
-import serial  # pyserial
+import serial
 import paho.mqtt.client as mqtt
-
 
 def main():
     p = argparse.ArgumentParser(description="Arduino serial -> MQTT bridge")
@@ -36,8 +43,12 @@ def main():
     p.add_argument("--baud", type=int, default=9600)
     p.add_argument("--broker", default="192.168.1.176")
     p.add_argument("--broker-port", type=int, default=1883)
-    p.add_argument("--country", default="BR")
-    p.add_argument("--entrepot-id", type=int, default=1)
+    p.add_argument("--country", required=True,
+                   help="Country code of the backend that owns this warehouse, e.g. BR. "
+                        "Must match its COUNTRY_CODE, or the backend never sees the data.")
+    p.add_argument("--entrepot-id", type=int, required=True,
+                   help="Id of the warehouse this sensor is installed in. Must be an "
+                        "existing entrepot: the backend drops measures for unknown ids.")
     p.add_argument("--qos", type=int, default=1)
     args = p.parse_args()
 
@@ -67,11 +78,9 @@ def main():
                 print(f"  (skip non-JSON) {line}")
                 continue
 
-            # Stamp with current wall-clock time (the Uno has no real clock).
-            payload["timestamp"] = int(time.time() * 1000)  # epoch milliseconds
+            payload["timestamp"] = int(time.time() * 1000)
             client.publish(topic, json.dumps(payload), qos=args.qos)
             print(f"  -> {topic}  {payload}")
-
 
 if __name__ == "__main__":
     try:

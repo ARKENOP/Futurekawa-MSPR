@@ -1,0 +1,101 @@
+# Stack siège : frontend-web + backend-central + Odoo.
+# Lancement : docker compose --env-file .env.siege -f docker-compose.siege.yml up -d --build
+# --env-file est obligatoire : le fichier sert à l'interpolation ci-dessous et
+# d'environnement pour backend-central.
+
+name: futurekawa-siege
+
+services:
+  odoo-db:
+    image: postgres:16
+    container_name: futurekawa-odoo-db
+    restart: unless-stopped
+    environment:
+      # Odoo crée ses propres bases : le rôle se connecte à la base de maintenance.
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${ODOO_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD:?ODOO_DB_PASSWORD manquant dans .env.siege}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ODOO_DB_USER:-odoo} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  odoo:
+    image: odoo:18
+    container_name: futurekawa-odoo
+    restart: unless-stopped
+    depends_on:
+      odoo-db:
+        condition: service_healthy
+    environment:
+      # L'image officielle traduit ces variables en options --db_*.
+      HOST: odoo-db
+      PORT: "5432"
+      USER: ${ODOO_DB_USER:-odoo}
+      PASSWORD: ${ODOO_DB_PASSWORD:?ODOO_DB_PASSWORD manquant dans .env.siege}
+    volumes:
+      - ./odoo/odoo.conf:/etc/odoo/odoo.conf:ro
+      # En écriture : Odoo écrit __pycache__ à côté du module.
+      - ./odoo/addons:/mnt/extra-addons
+      - odoo-web-data:/var/lib/odoo
+    # Publié : les backends pays y poussent leurs alertes en JSON-RPC.
+    ports:
+      - "8069:8069"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8069/web/login', timeout=5)\""]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  backend-central:
+    build:
+      # Contexte = racine du dépôt : l'image compile aussi futurekawa-lib.
+      context: .
+      dockerfile: backend-central/Dockerfile.prod
+    image: futurekawa/backend-central:latest
+    container_name: futurekawa-backend-central
+    restart: unless-stopped
+    env_file:
+      - .env.siege
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8090/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  frontend-web:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+      args:
+        # Vite fige ces valeurs à la construction. URL relative : nginx relaie.
+        VITE_API_BASE_URL: /api/v1
+        VITE_USE_MOCKS: "false"
+    image: futurekawa/frontend-web:latest
+    container_name: futurekawa-frontend
+    restart: unless-stopped
+    depends_on:
+      backend-central:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+volumes:
+  odoo-db-data:
+  odoo-web-data:

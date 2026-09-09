@@ -1,10 +1,14 @@
 package com.futurekawa.backendlocal.service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,14 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.futurekawa.backendlocal.config.PaysProperties;
 import com.futurekawa.backendlocal.dto.MqttMesurePayload;
-import com.futurekawa.backendlocal.dto.response.MesureStockageResponse;
 import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
 import com.futurekawa.backendlocal.mapper.MesureStockageMapper;
 import com.futurekawa.backendlocal.model.Entrepot;
 import com.futurekawa.backendlocal.model.MesureStockage;
-import com.futurekawa.backendlocal.model.enums.NiveauAlerte;
 import com.futurekawa.backendlocal.repository.EntrepotRepository;
 import com.futurekawa.backendlocal.repository.MesureStockageRepository;
+import com.futurekawa.lib.dto.response.MesureStockageResponse;
+import com.futurekawa.lib.enums.NiveauAlerte;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +33,22 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MesureService {
-
     private final MesureStockageRepository mesureRepository;
     private final EntrepotRepository entrepotRepository;
     private final MesureStockageMapper mesureMapper;
     private final AlerteService alerteService;
     private final PaysProperties paysProperties;
 
-    public Page<MesureStockageResponse> getHistoryByEntrepot(Long entrepotId, Pageable pageable) {
+    public Page<MesureStockageResponse> getHistoryByEntrepot(Long entrepotId, LocalDateTime from,
+                                                             LocalDateTime to, Pageable pageable) {
+        if (from != null || to != null) {
+            LocalDateTime start = from != null ? from : LocalDateTime.of(1970, 1, 1, 0, 0);
+            LocalDateTime end = to != null ? to : LocalDateTime.now().plusYears(100);
+            return mesureRepository
+                    .findByEntrepotIdAndDateHeureMesureBetweenOrderByDateHeureMesureDesc(
+                            entrepotId, start, end, pageable)
+                    .map(mesureMapper::toResponse);
+        }
         return mesureRepository.findByEntrepotIdOrderByDateHeureMesureDesc(entrepotId, pageable)
                 .map(mesureMapper::toResponse);
     }
@@ -54,13 +66,37 @@ public class MesureService {
 
         MesureStockage mesure = mesureMapper.toEntity(payload);
         mesure.setEntrepot(entrepot);
-        // Convert timestamp to LocalDateTime
+
         mesure.setDateHeureMesure(LocalDateTime.ofInstant(Instant.ofEpochMilli(payload.timestamp()), ZoneId.systemDefault()));
 
         MesureStockage saved = mesureRepository.save(mesure);
         log.debug("Saved new mesure for entrepôt {}", entrepotId);
 
         checkThresholds(entrepot, saved);
+    }
+
+    /**
+     * Wording of an alert, in French.
+     *
+     * <p>This string is not a log message: it is displayed in the supervision
+     * interface, copied onto the Odoo non-conformity ticket, and mailed to the
+     * quality team. It is business content read by French-speaking staff, so it
+     * follows the frontend's language rather than the codebase's.
+     *
+     * <p>Both severities quote the ideal values, because the reading alone does not
+     * tell the recipient how far out of range the entrepôt actually is.
+     *
+     * <p>The locale is explicit. {@code String.format} otherwise uses the JVM
+     * default, so the decimal separator would follow whatever locale the container
+     * happens to start with — the same reading would render "38.0" here and "38,0"
+     * elsewhere, in text that is stored and mailed.
+     */
+    private String descriptionConditions(String prefixe, String nomEntrepot,
+                                         BigDecimal temp, BigDecimal idealTemp,
+                                         BigDecimal hum, BigDecimal idealHum) {
+        return String.format(Locale.FRENCH,
+                "%s dans %s : température %.1f °C (idéale %.1f °C), humidité %.1f %% (idéale %.1f %%).",
+                prefixe, nomEntrepot, temp, idealTemp, hum, idealHum);
     }
 
     private void checkThresholds(Entrepot entrepot, MesureStockage mesure) {
@@ -81,12 +117,12 @@ public class MesureService {
 
         if (tempCritical || humCritical) {
             alerteService.createConditionAlerte(entrepot, mesure, NiveauAlerte.CRITIQUE,
-                    String.format("Critical conditions in %s: Temp=%.1f (Ideal=%.1f), Hum=%.1f (Ideal=%.1f)",
-                            entrepot.getNomEntrepot(), temp, idealTemp, hum, idealHum));
+                    descriptionConditions("Conditions critiques", entrepot.getNomEntrepot(),
+                            temp, idealTemp, hum, idealHum));
         } else if (tempWarning || humWarning) {
             alerteService.createConditionAlerte(entrepot, mesure, NiveauAlerte.WARNING,
-                    String.format("Warning conditions in %s: Temp=%.1f, Hum=%.1f",
-                            entrepot.getNomEntrepot(), temp, hum));
+                    descriptionConditions("Conditions hors tolérance", entrepot.getNomEntrepot(),
+                            temp, idealTemp, hum, idealHum));
         }
     }
 }

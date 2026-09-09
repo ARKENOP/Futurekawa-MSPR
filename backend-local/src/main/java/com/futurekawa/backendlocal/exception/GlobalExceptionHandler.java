@@ -5,18 +5,14 @@ import java.net.URI;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
-
-/**
- * Global exception handler providing RFC 7807 ProblemDetail responses.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleResourceNotFoundException(ResourceNotFoundException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -31,12 +27,31 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Bad Request");
         problemDetail.setType(URI.create("https://api.futurekawa.com/errors/validation-failed"));
 
-        // Add detailed field errors
         var fieldErrors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .toList();
         problemDetail.setProperty("invalid_fields", fieldErrors);
 
+        return problemDetail;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "The request body could not be read. Check the JSON syntax and that every "
+                        + "status or type value is one the API accepts.");
+        problemDetail.setTitle("Bad Request");
+        problemDetail.setType(URI.create("https://api.futurekawa.com/errors/unreadable-body"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleParameterTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Invalid value for parameter '" + ex.getName() + "'.");
+        problemDetail.setTitle("Bad Request");
+        problemDetail.setType(URI.create("https://api.futurekawa.com/errors/invalid-parameter"));
+        problemDetail.setProperty("parameter", ex.getName());
         return problemDetail;
     }
 
@@ -54,7 +69,7 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
         problemDetail.setTitle("Internal Server Error");
         problemDetail.setType(URI.create("https://api.futurekawa.com/errors/internal-error"));
-        // Don't expose internal exception messages to the client for security, but log them ideally.
+
         return problemDetail;
     }
 }

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ── FutureKawa Parent (which inherits spring-boot-starter-parent) ──── -->
+    <parent>
+        <groupId>com.futurekawa</groupId>
+        <artifactId>futurekawa-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <!-- ── Project Coordinates ────────────────────────────────────────────── -->
+    <artifactId>backend-central</artifactId>
+    <name>FutureKawa Backend Central</name>
+    <description>
+        Central backend aggregating the country-specific backend-local instances
+        (BR/EC/CO) into a single REST API for frontend-web, resilient to
+        per-country outages via Resilience4j circuit breakers.
+    </description>
+
+    <!-- ── Properties ─────────────────────────────────────────────────────── -->
+    <properties>
+        <resilience4j.version>2.2.0</resilience4j.version>
+    </properties>
+
+    <!-- ── Dependencies ───────────────────────────────────────────────────── -->
+    <dependencies>
+
+        <!-- ── Shared API contract (DTO records + domain enums) ──────────── -->
+        <dependency>
+            <groupId>com.futurekawa</groupId>
+            <artifactId>futurekawa-lib</artifactId>
+        </dependency>
+
+        <!-- ── Web ──────────────────────────────────────────────────────── -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- ── RestClient builder support (ClientHttpRequestFactoryBuilder, HttpClientSettings) ── -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-http-client</artifactId>
+        </dependency>
+
+        <!-- ── Jackson 2 compatibility ──────────────────────────────────── -->
+        <!-- Same rationale as backend-local: Spring Boot 4 defaults to Jackson 3
+             (JsonMapper). This module stays on the Jackson 2 API so the shared
+             *Response records serialize identically in both services. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-jackson2</artifactId>
+        </dependency>
+
+        <!-- ── Validation (jakarta.validation) ──────────────────────────── -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ── Resilience4j: per-country circuit breakers ───────────────── -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+            <version>${resilience4j.version}</version>
+        </dependency>
+
+        <!-- ── API Documentation: springdoc-openapi (Swagger UI) ────────── -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
+        <!-- ── Actuator (health, metrics) ───────────────────────────────── -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- ── Lombok ───────────────────────────────────────────────────── -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ── Configuration Processor (for @ConfigurationProperties) ───── -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- TEST SCOPE                                                      -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <!-- ── Build Configuration ────────────────────────────────────────── -->
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven Plugin (fat-jar rules inherited from the parent) -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- Compiler Plugin — Lombok annotation processor -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <!-- JaCoCo — same plugin, exclusions and 80% BUNDLE LINE gate as
+                 backend-local, so `mvn verify` enforces coverage on both services. -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Classes with no meaningful branch/line logic to test:
+                         the boot entry point, framework wiring, and immutable
+                         @ConfigurationProperties records. -->
+                    <excludes>
+                        <exclude>**/BackendCentralApplication.class</exclude>
+                        <exclude>**/config/OpenApiConfig.class</exclude>
+                        <exclude>**/config/RestClientConfig.class</exclude>
+                        <exclude>**/config/AsyncConfig.class</exclude>
+                        <exclude>**/config/*Properties.class</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

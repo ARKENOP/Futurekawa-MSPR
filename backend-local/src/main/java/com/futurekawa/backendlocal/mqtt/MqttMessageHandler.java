@@ -13,14 +13,10 @@ import com.futurekawa.backendlocal.service.MesureService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Handles incoming MQTT messages from sensors.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class MqttMessageHandler {
-
     private final ObjectMapper objectMapper;
     private final MesureService mesureService;
 
@@ -32,8 +28,6 @@ public class MqttMessageHandler {
         log.debug("Received MQTT message on topic: {}", topic);
 
         try {
-            // Expected topic format: futurekawa/{COUNTRY_CODE}/entrepot/{id}/mesures
-            // Example: futurekawa/BR/entrepot/1/mesures
             String[] parts = topic.split("/");
             if (parts.length < 5 || !"entrepot".equals(parts[2])) {
                 log.warn("Ignoring message from unexpected topic structure: {}", topic);

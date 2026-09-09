@@ -1,0 +1,41 @@
+:root {
+  /* ── Surfaces (espresso torréfié, chaud, pas un noir neutre) ── */
+  --bg-espresso: #1c1614;
+  --surface-bean: #241d1a;
+  --surface-raised: #2a211d;
+  --border-husk: #3a2f29;
+
+  /* ── Texte ── */
+  --text-crema: #ede4da;
+  --text-muted: #a89384;
+
+  /* ── Rampe de torréfaction (séquentiel données + jauges) ── */
+  --roast-green: #b7c49a; /* café cru / sous-optimal */
+  --roast-cinnamon: #c9a56b; /* cannelle / warning */
+  --roast-medium: #a56a3a; /* moyen */
+  --roast-dark: #6e3d24; /* foncé */
+  --roast-charred: #3b201a; /* carbonisé / surchauffe */
+
+  /* ── Accents ── */
+  --cherry: #d2452e; /* cerise de café : alerte CRITIQUE */
+  --crema-gold: #e8c89a; /* bande idéale / état conforme */
+
+  /* ── Typo ── */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* ── Rayons / espacements ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-card: 0 1px 0 rgba(237, 228, 218, 0.04), 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  /* ── Sémantique alertes / statuts ── */
+  --niveau-info: var(--roast-green);
+  --niveau-warning: var(--roast-cinnamon);
+  --niveau-critique: var(--cherry);
+  --statut-conforme: var(--crema-gold);
+  --statut-en-alerte: var(--roast-cinnamon);
+  --statut-perime: var(--roast-charred);
+}

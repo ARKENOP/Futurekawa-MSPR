@@ -20,9 +20,8 @@ import lombok.Setter;
 @Table(name = "pays")
 @Getter
 @Setter
-@NoArgsConstructor // Required by JPA
+@NoArgsConstructor
 public class Pays implements Serializable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_pays")

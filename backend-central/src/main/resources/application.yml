@@ -1,0 +1,110 @@
+# ==============================================================================
+# FutureKawa Backend Central — Application Configuration
+# ==============================================================================
+# All values use ${ENV_VAR} placeholders resolved from the .env file
+# via Docker Compose environment injection.
+# ==============================================================================
+
+spring:
+  application:
+    name: backend-central
+
+  # ── Jackson 2 ────────────────────────────────────────────────────────────
+  # This app uses the Jackson 2 API (spring-boot-jackson2). In Spring Boot 4
+  # the plain `spring.jackson.*` keys target Jackson 3, so Jackson 2 config
+  # lives under `spring.jackson2.*`.
+  #
+  # IMPORTANT: unlike backend-local, default-property-inclusion stays ALWAYS
+  # (not non_null). frontend-web/src/types/api.ts types nullable fields as
+  # `T | null` and expects them present in the JSON, not omitted.
+  jackson2:
+    serialization:
+      write-dates-as-timestamps: false
+
+  # Use Jackson 2 for HTTP message conversion so @JsonProperty is honoured.
+  http:
+    converters:
+      preferred-json-mapper: jackson2
+
+  # ── Pagination defaults ──────────────────────────────────────────────────
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+
+# ── Server ─────────────────────────────────────────────────────────────────────
+server:
+  port: ${SERVER_PORT:8090}
+  forward-headers-strategy: framework
+
+# ── Actuator ───────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      # No application-level authentication on the central, so `when-authorized`
+      # would never show anything.  See docs/ARCHITECTURE.md for the rationale.
+      show-details: always
+
+# ── Springdoc / Swagger UI ─────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Custom application properties (bound via @ConfigurationProperties)
+# ══════════════════════════════════════════════════════════════════════════════
+
+futurekawa:
+  # ── Backend-local registry ───────────────────────────────────────────────
+  # `CODE=url` pairs, one per deployed country — the list is open-ended, since each
+  # backend-local declares its own COUNTRY_CODE in its .env. Set it entirely from the
+  # environment:
+  #   FUTUREKAWA_LOCALS=BR=http://backend-local-br:8081,EC=http://backend-local-ec:8081
+  # The code must match the codePays that backend returns on GET /api/v1/pays; the
+  # discovery scheduler logs an error on mismatch. The default below is a single local
+  # country for development.
+  locals: ${FUTUREKAWA_LOCALS:BR=http://localhost:8081}
+
+  # ── Periodic country discovery (nomPays, thresholds) ─────────────────────
+  discovery:
+    fixed-delay-ms: ${DISCOVERY_FIXED_DELAY_MS:60000}
+
+  # ── HTTP client towards the locals ───────────────────────────────────────
+  client:
+    connect-timeout-ms: ${LOCAL_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${LOCAL_READ_TIMEOUT_MS:5000}
+
+  # ── CORS: allowed frontend origins ───────────────────────────────────────
+  # Only needed when the frontend calls the central directly (build served by
+  # nginx, or `vite preview`). Under `pnpm dev` the Vite proxy keeps both on the
+  # same origin, so CORS does not come into play.
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173}
+
+# ── Resilience4j: default config; one CircuitBreaker per codePays, created on demand ──
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        # A 4xx is the country answering, not failing: it must not open the circuit.
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  level:
+    com.futurekawa: DEBUG

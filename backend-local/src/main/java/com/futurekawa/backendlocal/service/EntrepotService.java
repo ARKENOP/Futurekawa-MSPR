@@ -6,12 +6,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.futurekawa.backendlocal.config.PaysProperties;
-import com.futurekawa.backendlocal.dto.response.EntrepotResponse;
 import com.futurekawa.backendlocal.exception.ResourceNotFoundException;
 import com.futurekawa.backendlocal.mapper.EntrepotMapper;
 import com.futurekawa.backendlocal.model.Pays;
 import com.futurekawa.backendlocal.repository.EntrepotRepository;
 import com.futurekawa.backendlocal.repository.PaysRepository;
+import com.futurekawa.lib.dto.response.EntrepotResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EntrepotService {
-
     private final EntrepotRepository entrepotRepository;
     private final PaysRepository paysRepository;
     private final EntrepotMapper entrepotMapper;

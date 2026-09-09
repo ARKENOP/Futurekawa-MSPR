@@ -1,0 +1,31 @@
+# ==============================================================================
+# FutureKawa — Headquarters (siège) stack: backend-central
+# ==============================================================================
+#   Deploy:  cp .env.example .env   # then edit
+#            docker compose up -d --build
+#
+# Mirrors backend-local/docker-compose.prod.yml: the image is built from source,
+# so the host needs no JDK/Maven. The build context is the repository root
+# because this service depends on the futurekawa-lib module.
+# ==============================================================================
+
+name: futurekawa-siege
+
+services:
+  backend-central:
+    build:
+      context: ..
+      dockerfile: backend-central/Dockerfile.prod
+    image: futurekawa/backend-central:latest
+    container_name: futurekawa-backend-central
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8090/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s

@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.futurekawa.backendlocal.dto.request.UpdateAlerteRequest;
-import com.futurekawa.backendlocal.dto.response.AlerteResponse;
 import com.futurekawa.backendlocal.service.AlerteService;
+import com.futurekawa.lib.dto.request.UpdateAlerteRequest;
+import com.futurekawa.lib.dto.response.AlerteResponse;
+import com.futurekawa.lib.enums.StatutAlerte;
+import com.futurekawa.lib.enums.TypeAlerte;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,12 +25,13 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/alertes")
 @RequiredArgsConstructor
 public class AlerteController {
-
     private final AlerteService alerteService;
 
     @GetMapping
-    public Page<AlerteResponse> listAlertes(@ParameterObject Pageable pageable) {
-        return alerteService.listAll(pageable);
+    public Page<AlerteResponse> listAlertes(@RequestParam(required = false) StatutAlerte statutAlerte,
+                                            @RequestParam(required = false) TypeAlerte typeAlerte,
+                                            @ParameterObject Pageable pageable) {
+        return alerteService.listAll(statutAlerte, typeAlerte, pageable);
     }
 
     @GetMapping("/{id}")

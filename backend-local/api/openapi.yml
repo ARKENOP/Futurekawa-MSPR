@@ -1,0 +1,686 @@
+openapi: 3.1.0
+info:
+  title: FutureKawa Backend Local API
+  description: "REST API for local warehouse management, lot tracking, and IoT sensor\
+    \ metrics. (Deployed per country)"
+  version: v0.1.0
+servers:
+- url: http://localhost:40631
+  description: Generated server url
+paths:
+  /api/v1/lots:
+    get:
+      tags:
+      - lot-controller
+      operationId: listLots
+      parameters:
+      - name: statutLot
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - CONFORME
+          - EN_ALERTE
+          - PERIME
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
+        in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageLotResponse"
+    post:
+      tags:
+      - lot-controller
+      operationId: createLot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLotRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LotResponse"
+  /api/v1/lots/{id}:
+    get:
+      tags:
+      - lot-controller
+      operationId: getLot
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LotResponse"
+    patch:
+      tags:
+      - lot-controller
+      operationId: updateLotStatut
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLotRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LotResponse"
+  /api/v1/alertes/{id}:
+    get:
+      tags:
+      - alerte-controller
+      operationId: getAlerte
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AlerteResponse"
+    patch:
+      tags:
+      - alerte-controller
+      operationId: closeAlerte
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAlerteRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AlerteResponse"
+  /api/v1/pays:
+    get:
+      tags:
+      - pays-controller
+      operationId: getPays
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PaysResponse"
+  /api/v1/exploitations:
+    get:
+      tags:
+      - exploitation-controller
+      operationId: listExploitations
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExploitationResponse"
+  /api/v1/entrepots:
+    get:
+      tags:
+      - entrepot-controller
+      operationId: listEntrepots
+      parameters:
+      - name: exploitationId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EntrepotResponse"
+  /api/v1/entrepots/{id}:
+    get:
+      tags:
+      - entrepot-controller
+      operationId: getEntrepot
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EntrepotResponse"
+  /api/v1/entrepots/{entrepotId}/mesures:
+    get:
+      tags:
+      - mesure-controller
+      operationId: getMesuresHistory
+      parameters:
+      - name: entrepotId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
+        in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageMesureStockageResponse"
+  /api/v1/entrepots/{entrepotId}/mesures/latest:
+    get:
+      tags:
+      - mesure-controller
+      operationId: getLatestMesure
+      parameters:
+      - name: entrepotId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MesureStockageResponse"
+  /api/v1/alertes:
+    get:
+      tags:
+      - alerte-controller
+      operationId: listAlertes
+      parameters:
+      - name: statutAlerte
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - OUVERTE
+          - NOTIFIEE
+          - CLOTUREE
+      - name: typeAlerte
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - CONDITION_NON_IDEALE
+          - LOT_TROP_ANCIEN
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
+        in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageAlerteResponse"
+components:
+  schemas:
+    CreateLotRequest:
+      type: object
+      properties:
+        referenceLot:
+          type: string
+          maxLength: 50
+          minLength: 0
+        dateEntreeStockage:
+          type: string
+          format: date
+        dateRecolte:
+          type: string
+          format: date
+        qualiteLot:
+          type: string
+          maxLength: 255
+          minLength: 0
+        exploitationId:
+          type: integer
+          format: int64
+        entrepotId:
+          type: integer
+          format: int64
+      required:
+      - dateEntreeStockage
+      - entrepotId
+      - exploitationId
+      - referenceLot
+    LotResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        referenceLot:
+          type: string
+        dateEntreeStockage:
+          type: string
+          format: date
+        dateRecolte:
+          type: string
+          format: date
+        statutLot:
+          type: string
+          enum:
+          - CONFORME
+          - EN_ALERTE
+          - PERIME
+        qualiteLot:
+          type: string
+        exploitationId:
+          type: integer
+          format: int64
+        entrepotId:
+          type: integer
+          format: int64
+        paysId:
+          type: integer
+          format: int64
+        ancienneteJours:
+          type: integer
+          format: int32
+    UpdateLotRequest:
+      type: object
+      properties:
+        statutLot:
+          type: string
+          enum:
+          - CONFORME
+          - EN_ALERTE
+          - PERIME
+      required:
+      - statutLot
+    UpdateAlerteRequest:
+      type: object
+      properties:
+        statutAlerte:
+          type: string
+          enum:
+          - OUVERTE
+          - NOTIFIEE
+          - CLOTUREE
+      required:
+      - statutAlerte
+    AlerteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        typeAlerte:
+          type: string
+          enum:
+          - CONDITION_NON_IDEALE
+          - LOT_TROP_ANCIEN
+        niveau:
+          type: string
+          enum:
+          - INFO
+          - WARNING
+          - CRITIQUE
+        statutAlerte:
+          type: string
+          enum:
+          - OUVERTE
+          - NOTIFIEE
+          - CLOTUREE
+        messageDescription:
+          type: string
+        dateHeureCreation:
+          type: string
+          format: date-time
+        dateHeureCloture:
+          type: string
+          format: date-time
+        entrepotId:
+          type: integer
+          format: int64
+        lotId:
+          type: integer
+          format: int64
+        paysId:
+          type: integer
+          format: int64
+    PaysResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        codePays:
+          type: string
+        nomPays:
+          type: string
+        temperatureIdealeC:
+          type: number
+        humiditeIdealePourcent:
+          type: number
+        toleranceTemperatureC:
+          type: number
+        toleranceHumiditePourcent:
+          type: number
+        estActif:
+          type: boolean
+    PageLotResponse:
+      type: object
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/LotResponse"
+        number:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int64
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        paged:
+          type: boolean
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+    ExploitationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nomExploitation:
+          type: string
+        localisation:
+          type: string
+        responsableEmail:
+          type: string
+        estActive:
+          type: boolean
+        paysId:
+          type: integer
+          format: int64
+        codePays:
+          type: string
+    EntrepotResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nomEntrepot:
+          type: string
+        localisation:
+          type: string
+        capaciteMax:
+          type: integer
+          format: int32
+        statutEntrepot:
+          type: string
+        exploitationId:
+          type: integer
+          format: int64
+        paysId:
+          type: integer
+          format: int64
+    MesureStockageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        idCapteur:
+          type: string
+        dateHeureMesure:
+          type: string
+          format: date-time
+        temperatureC:
+          type: number
+        humiditePourcent:
+          type: number
+        entrepotId:
+          type: integer
+          format: int64
+        lotId:
+          type: integer
+          format: int64
+    PageMesureStockageResponse:
+      type: object
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/MesureStockageResponse"
+        number:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    PageAlerteResponse:
+      type: object
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlerteResponse"
+        number:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean

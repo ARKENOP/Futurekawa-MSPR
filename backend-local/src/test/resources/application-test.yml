@@ -1,0 +1,51 @@
+# ==============================================================================
+# Test profile — used by integration tests (@ActiveProfiles("test")).
+# Backed by an in-memory H2 in PostgreSQL-compatibility mode, so tests need no
+# Docker or external database.
+# ==============================================================================
+spring:
+  datasource:
+    url: jdbc:h2:mem:futurekawa;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    # Override the production PostgreSQLDialect for the H2-backed test DB.
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+futurekawa:
+  # No live broker in tests: disables MqttConfig (see @ConditionalOnProperty).
+  mqtt:
+    enabled: false
+    broker-url: tcp://localhost:1883
+    topic: futurekawa/BR/entrepot/+/mesures
+    client-id: backend-local-test
+    qos: 1
+
+  # Country thresholds the alerting engine reads (Brésil defaults).
+  pays:
+    code: BR
+    nom: Brésil
+    temperature-ideale-c: 29
+    humidite-ideale-pourcent: 55
+    tolerance-temperature-c: 3
+    tolerance-humidite-pourcent: 2
+    duree-max-stockage-jours: 365
+
+  # Odoo is never actually called in tests, but @Validated @NotBlank binding
+  # still requires non-blank values for the context to start.
+  odoo:
+    url: http://localhost:8069
+    db: test
+    api-user: test@futurekawa.local
+    api-key: test-key
+
+logging:
+  level:
+    com.futurekawa: INFO
+    org.hibernate.SQL: WARN
